@@ -1,0 +1,124 @@
+= defog
+
+Defog wraps the [fog](https://rubygems.org/gems/fog) gem (specifically,
+[Fog::Storage](http://fog.io/1.3.1/storage/)), providing access to files
+stored in the cloud via proxy files on the local file system.
+A proxy file can be
+* Read-only:  A local cached copy of a cloud file.
+* Write-only:  A local file that will be uploaded to the cloud.
+* Read-Write:  A local file that mirrors a cloud file, propogating changes back to the cloud.
+
+Defog thus lets you use ordinary programmatic tools to access and
+manipulate your cloud data.  Thanks to the magic of
+[fog](https://rubygems.org/gems/fog) it works across cloud providers, and
+it also works with the local file system as a "provider" so that you can,
+e.g. use the local file system for development and the cloud for
+production.
+
+== Usage Summary
+
+Full Rdoc is available at http://rubydoc.info/gems/defog
+
+=== Create proxy connection
+
+Connect to the remote storage by creating a <code>Defog::Proxy</code>
+object, which proxies files in a specific remote location, e.g.:
+
+        defog = Defog::Proxy.new(:provider => :AWS,
+                                 :aws_access_key_id => "yourid",
+                                 :aws_secret_access_key => "yoursecret",
+                                 :region => "optional-s3-region",
+                                 :bucket => "s3-bucket-name")
+
+        defog = Defog::Proxy.new(:provider => :Local,
+                                 :directory => "/path/to/directory")
+
+=== Proxy a file
+
+Proxy a remote file by creating a <code>Defog::File</code> object:
+
+        file = defog.file("key/of/file", mode)
+        # ... access file ...
+        file.close
+
+        defog.file("key/of/file", mode) do |file|
+           # ... access file ...
+        end
+
+<code>mode</code> can be "r", "r+", "w", "w+", "a", or "a+" with the usual
+semantics.  Closing the file object (explicitly or implicitly at the end of
+the block) synchronizes the local proxy with the remote storage and (by
+default) deletes the local proxy file.
+
+The <code>Defog::File</code> class inherits from <code>::File</code>.  So
+you can use it directly for I/O operations, such as
+  
+     defog.file("key", "r") do |file|
+        file.readlines
+     end
+
+You can also access the proxy file via its path, allowing things such as
+
+  defog.file("image100x100.jpg", "w") do |file|
+    system("convert souce.png -scale 100x100 #{file.path}")
+  end
+
+(Note that the proxy file path has the same file extension as the cloud key string.)
+
+
+To suppress updating the remote storage, delete the local proxy file before
+closing (e.g. via <code>File.unlink(file.path)</code>) or pass
+<code>:synchronize => false</code> to the <code>#close</code> method.
+
+
+=== Persistence
+
+By default, the local proxy files are deleted when closed.  However, it is
+possible to persist the local proxy, so that it if the remote is accessed
+again-- whether in the same program execution or at a later time or by a
+different program--the data will not need to be transferred again.  Do so
+via
+
+        file = defog.file("key/of/file", mode, :persist => true)
+
+or
+
+        file.close(:persist => true) # overrides setting at runtime
+
+When opening a file whose local proxy has been persisted, Defog checks to see if
+the local proxy is out of date and if so replaces it.
+
+Currently, Defog does not natively support a way to explictly delete the
+locally persisted file (other than opening and closing it again without
+:persist => true).  But it's fair game to delete it outside of Defog, such
+as via a cron job that cleans out old files.
+
+=== Local Proxy File Location
+
+Local proxy files are stored by default in
+
+        #{tmproot}/defog/#{provider}/#{location}/#{key}
+
+where <code>tmproot</code> is <code>Rails.root+"tmp"</code> if Rails is
+defined, otherwise <code>Dir.tmpdir()</code>.  For AWS,
+  <code>location</code> is the bucket name, and for Local it's the
+  local_root directory path with slashes replaced with dashes
+
+See the documentation for configuring other locations.
+
+== Installation
+
+Gemfile:
+        gem 'defog'
+
+== Compatibility
+
+Defog has (so far) been tested using MRI 1.9.3 and
+[fog](https://rubygems.org/gems/fog) storage providers :Local and :AWS
+
+== History
+
+== Copyright
+
+Released under the MIT License.  See LICENSE for details.
+
