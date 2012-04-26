@@ -229,29 +229,6 @@ describe "Defog::Proxy::File" do
 
   end
 
-  def key
-    example.metadata[:full_description].gsub(/\+/,'plus').gsub(/\W/,'-') + "/filename"
-  end
-
-  def create_remote(body)
-    @proxy.fog_wrapper.fog_directory.files.create(:key => key, :body => body)
-  end
-
-  def proxy_path
-    Pathname.new("#{@proxy.proxy_root}/#{key}").expand_path
-  end
-
-  def create_proxy(body)
-    path = proxy_path
-    path.dirname.mkpath
-    path.open("w") do |f|
-      f.write(body)
-    end
-  end
-
-  def remote_body
-    @proxy.fog_wrapper.fog_directory.files.get(key).body
-  end
 
 
 end

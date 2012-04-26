@@ -6,6 +6,7 @@ module Defog #:nodoc: all
   class FogWrapper #:nodoc: all
 
     attr_reader :location
+    attr_reader :fog_connection
     attr_reader :fog_directory
 
     def self.connect(opts={})
@@ -40,14 +41,23 @@ module Defog #:nodoc: all
 
       def initialize(opts={})
         opts = opts.keyword_args(:local_root => :required)
-        directory = Pathname.new(opts.local_root).realpath
-        @location = directory.to_s.gsub(%r{/},'_')
-        @fog_connection = Fog::Storage.new(:provider => provider, :local_root => directory)
+        @local_root = Pathname.new(opts.local_root).realpath
+        @location = @local_root.to_s.gsub(%r{/},'_')
+        @fog_connection = Fog::Storage.new(:provider => provider, :local_root => @local_root)
         @fog_directory = @fog_connection.directories.get('.')
       end
 
       def get_md5(key)
         Digest::MD5.hexdigest(fog_head(key).body)
+      end
+
+      def url(key, expiry)
+        localpath = Pathname.new("#{@local_root}/#{key}").expand_path
+        if defined?(Rails)
+          relative = localpath.relative_path_from Rails.root + "public" rescue nil
+          return "/" + relative.to_s if relative and not relative.to_s.start_with? "../"
+        end
+        "file://#{localpath}"
       end
 
     end
@@ -65,6 +75,10 @@ module Defog #:nodoc: all
 
       def get_md5(key)
         fog_head(key).content_md5
+      end
+
+      def url(key, expiry)
+        fog_head(key).url(expiry)
       end
 
     end

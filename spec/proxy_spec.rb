@@ -8,12 +8,9 @@ shared_examples "a proxy" do |args|
   end
 
   it "should default proxy root to Rails.root" do
-    begin
-      Kernel.const_set("Rails", Struct.new(:root).new("/dummy/rails/app/"))
+    with_rails_defined do
       proxy = Defog::Proxy.new(args)
       proxy.proxy_root.should == Rails.root + "defog" + proxy.provider.to_s + proxy.location
-    ensure
-      Kernel.send :remove_const, "Rails"
     end
   end
 
@@ -23,6 +20,42 @@ shared_examples "a proxy" do |args|
     proxy.proxy_root.should == path
   end
 
+  context do
+    before(:each) do
+      @proxy = Defog::Proxy.new(args)
+    end
+
+    it "file should return a handle" do
+      handle = @proxy.file(key)
+      handle.proxy.should == @proxy
+      handle.key.should == key
+    end
+
+    it "file should yield a handle" do
+      ret = @proxy.file(key) do |handle|
+        handle.proxy.should == @proxy
+        handle.key.should == key
+        123
+      end
+      ret.should == 123
+    end
+
+    it "should forward file open to handle" do
+      Defog::Handle.should_receive(:new).with(@proxy, key).and_return { mock('Handle').tap { |handle|
+        handle.should_receive(:open).with("r+", :persist => true)
+      } }
+      @proxy.file(key, "r+", :persist => true)
+    end
+
+    it "should return fog storage" do
+      @proxy.fog_connection.should == @proxy.fog_directory.connection
+    end
+
+    it "should return fog directory" do
+      create_remote("hello")
+      @proxy.fog_directory.files.get(key).body.should == "hello"
+    end
+  end
 
 end
 

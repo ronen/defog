@@ -15,6 +15,10 @@ it also works with the local file system as a "provider" so that you can,
 e.g. use the local file system for development and the cloud for
 production.
 
+Defog also provides a few simple remote-file management methods to minimize
+the need to dig down into the Fog layer; but full access to the underlying
+fog objects is available should it be needed.
+
 == Usage Summary
 
 Full Rdoc is available at http://rubydoc.info/gems/defog
@@ -35,7 +39,7 @@ object, which proxies files in a specific remote location, e.g.:
 
 === Proxy a file
 
-Proxy a remote file by creating a <code>Defog::File</code> object:
+Open a proxy to a remote file by creating a <code>Defog::File</code> object:
 
         file = defog.file("key/of/file", mode)
         # ... access file ...
@@ -46,7 +50,14 @@ Proxy a remote file by creating a <code>Defog::File</code> object:
         end
 
 <code>mode</code> can be "r", "r+", "w", "w+", "a", or "a+" with the usual
-semantics.  Closing the file object (explicitly or implicitly at the end of
+semantics. 
+
+When opened in a readable mode ("r", "r+", "w+", "a+"), first caches the
+cloud file in the local proxy.  When opened in a writeable mode ("r+", "w",
+"w+", "a", "a+"), arranges to upload the changes back to the cloud file
+at close time.
+
+Closing the file object (explicitly or implicitly at the end of
 the block) synchronizes the local proxy with the remote storage and (by
 default) deletes the local proxy file.
 
@@ -65,11 +76,24 @@ You can also access the proxy file via its path, allowing things such as
 
 (Note that the proxy file path has the same file extension as the cloud key string.)
 
-
 To suppress updating the remote storage, delete the local proxy file before
 closing (e.g. via <code>File.unlink(file.path)</code>) or pass
 <code>:synchronize => false</code> to the <code>#close</code> method.
 
+=== Proxy handle
+
+Calling Defog::Proxy#file without a mode returns a Defog::Handle object that supports remote file query and manipulation:
+
+    proxy.file("key").exist?  # => returns true if the remove file exists
+    proxy.file("key").delete  # => deletes the remote file
+
+In fact, <code>proxy.file("key", mode, options, &block)</code> is really just shorthand for
+
+    proxy.file("key").open(mode, options, &block)
+
+In addition, the handle allows you to look up the path where the local proxy file will be if/when you open the proxy (but without actually doing the proxying).
+
+    proxy.file("key").proxy_path  # returns pathname where proxy file will be when you open
 
 === Persistence
 
@@ -83,7 +107,7 @@ via
 
 or
 
-        file.close(:persist => true) # overrides setting at runtime
+        file.close(:persist => true)
 
 When opening a file whose local proxy has been persisted, Defog checks to see if
 the local proxy is out of date and if so replaces it.
@@ -100,9 +124,9 @@ Local proxy files are stored by default in
         #{tmproot}/defog/#{provider}/#{location}/#{key}
 
 where <code>tmproot</code> is <code>Rails.root+"tmp"</code> if Rails is
-defined, otherwise <code>Dir.tmpdir()</code>.  For AWS,
-  <code>location</code> is the bucket name, and for Local it's the
-  local_root directory path with slashes replaced with dashes
+defined, otherwise <code>Dir.tmpdir()</code>.  For :AWS,
+<code>location</code> is the bucket name, and for :local it's the
+<code>local_root</code> directory path with slashes replaced with underscores.
 
 See the documentation for configuring other locations.
 
@@ -113,10 +137,8 @@ Gemfile:
 
 == Compatibility
 
-Defog has (so far) been tested using MRI 1.9.3 and
-[fog](https://rubygems.org/gems/fog) storage providers :Local and :AWS
-
-== History
+Defog has (so far) been tested on MRI 1.9.3 using
+[fog](https://rubygems.org/gems/fog) storage providers :local and :AWS
 
 == Copyright
 

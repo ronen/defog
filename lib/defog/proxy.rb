@@ -59,26 +59,35 @@ module Defog
       @fog_wrapper.location
     end
 
-    # Proxy a remote cloud file.  Returns a Defog::File object, which is a
-    # specialization of ::File. 
+    # Returns the underlying Fog::Storage object for the cloud connection
+    def fog_connection
+      @fog_wrapper.fog_connection
+    end
+    
+    # Returns the Fog directory object for the root of the cloud files
+    def fog_directory
+      @fog_wrapper.fog_directory
+    end
+
+    # Proxy a remote cloud file.  Returns a Defog::Handle object that
+    # represents the file. 
     #
-    # <code>key</code> is the cloud storage key for the file.
+    # If a <code>mode</code> is specified given opens a proxy file via
+    # Defog::Handle#open (passing it the mode and other options and
+    # optional block), returning instead the Defog::File object.
     #
-    # <code>mode</code> can be "r", "r+", "w", "w+", "a", or "a+" with the
-    # usual semantics.
+    # Thus 
+    #    proxy.file("key", mode, options, &block)
+    # is shorthand for
+    #    proxy.file("key").open(mode, options, &block)
     #
-    # Like ::File.open, if called with a block yields the file object to
-    # the block and ensures the file will be closed when leaving the block.
-    #
-    # Normally the proxy file is synchronized and then deleted upon close.
-    # Pass
-    #    :persist => true
-    # to maintain the file after closing.   See File#close for more
-    # details.
-    #
-    def file(key, mode, opts={}, &block)
-      opts = opts.keyword_args(:persist)
-      File.get(opts.merge(:proxy => self, :key => key, :mode => mode), &block)
+    def file(key, mode=nil, opts={}, &block)
+      handle = Handle.new(self, key)
+      case
+      when mode then handle.open(mode, opts, &block) if mode
+      when block then block.call(handle)
+      else handle
+      end
     end
 
   end

@@ -1,5 +1,6 @@
 require 'defog/error'
 require 'defog/file'
 require 'defog/fog_wrapper'
+require 'defog/handle'
 require 'defog/proxy'
 require 'defog/version'
