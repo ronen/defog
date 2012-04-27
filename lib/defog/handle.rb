@@ -39,6 +39,11 @@ module Defog
       @proxy.fog_wrapper.fog_head(@key).destroy
     end
 
+    # Returns the size of the remote cloud file
+    def size
+      @proxy.fog_wrapper.fog_head(@key).content_length
+    end
+
     # Returns a URL to access the remote cloud file.
     #
     # The option

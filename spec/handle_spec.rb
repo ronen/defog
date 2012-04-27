@@ -19,6 +19,12 @@ shared_examples "a handle" do |proxyargs|
     @handle.should_not be_exist
   end
 
+  it "should report size of remote cloud file" do
+    contents = "This is a test"
+    create_remote(contents)
+    @handle.size.should == contents.size
+  end
+
   it "should delete a remote cloud file" do
     create_remote("delete me")
     remote_exist?.should be_true

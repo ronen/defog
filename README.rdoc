@@ -82,18 +82,21 @@ closing (e.g. via <code>File.unlink(file.path)</code>) or pass
 
 === Proxy handle
 
-Calling Defog::Proxy#file without a mode returns a Defog::Handle object that supports remote file query and manipulation:
+Calling Defog::Proxy#file without a mode returns a Defog::Handle object that supports cloud file query and manipulation:
 
-    proxy.file("key").exist?  # => returns true if the remove file exists
-    proxy.file("key").delete  # => deletes the remote file
+    handle = defog.file("key")
+    handle.exist?        # => true if the cloud file exists
+    handle.delete        # deletes the cloud file
+    handle.size          # => size of the cloud file
+    handle.last_modified # => modification date of the cloud file
 
-In fact, <code>proxy.file("key", mode, options, &block)</code> is really just shorthand for
+In fact, <code>defog.file("key", mode, options, &block)</code> is really just shorthand for
 
-    proxy.file("key").open(mode, options, &block)
+    defog.file("key").open(mode, options, &block)
 
 In addition, the handle allows you to look up the path where the local proxy file will be if/when you open the proxy (but without actually doing the proxying).
 
-    proxy.file("key").proxy_path  # returns pathname where proxy file will be when you open
+    defog.file("key").proxy_path  # => Pathname where proxy file is, was, or will be
 
 === Persistence
 
