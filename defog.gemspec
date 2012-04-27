@@ -17,6 +17,7 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency 'fog'
   gem.add_dependency 'hash_keyword_args'
+  gem.add_dependency 'fastandand'
 
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rspec'

@@ -15,14 +15,24 @@ shared_examples "a handle" do |proxyargs|
     @handle.should be_exist
   end
 
-  it "should report exist? false if remote cloud file does not exists" do
+  it "should report exist? false if remote cloud file does not exist" do
     @handle.should_not be_exist
   end
 
-  it "should report size of remote cloud file" do
-    contents = "This is a test"
-    create_remote(contents)
-    @handle.size.should == contents.size
+  { :size => :content_length,
+    :last_modified => :last_modified,
+    :delete => :destroy }.each do |method, fog_method|
+
+    it "should delegate #{method.inspect} to the fog model #{fog_method.inspect}if the remote file exists" do
+      create_remote("delegate me")
+      @handle.fog_model.class.any_instance.should_receive(fog_method).and_return { "dummy" }
+      @handle.send(method).should == "dummy"
+    end
+
+    it "should return nil from #{method} if the remote file does not exist" do
+      @handle.send(method).should be_nil
+    end
+
   end
 
   it "should delete a remote cloud file" do

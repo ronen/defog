@@ -1,3 +1,5 @@
+require "fastandand"
+
 module Defog
   # Create a Defog::Handle proxy instance via Defog::Proxy#file, such as
   #
@@ -35,17 +37,23 @@ module Defog
 
     # Returns true if the remote cloud file exists 
     def exist?
-      !!@proxy.fog_wrapper.fog_head(@key)
+      !!fog_model
     end
 
-    # Deletes the remote cloud file
+    # Deletes the remote cloud file if it exists
     def delete
-      @proxy.fog_wrapper.fog_head(@key).destroy
+      fog_model.andand.destroy
     end
 
-    # Returns the size of the remote cloud file
+    # Returns the size of the remote cloud file, or nil if it doesn't exist
     def size
-      @proxy.fog_wrapper.fog_head(@key).content_length
+      fog_model.andand.content_length
+    end
+    
+    # Returns the modification date of the remote cloud file, or nil if it
+    # doesn't exist
+    def last_modified
+      fog_model.andand.last_modified
     end
 
     # Returns a URL to access the remote cloud file.
