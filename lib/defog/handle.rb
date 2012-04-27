@@ -14,13 +14,17 @@ module Defog
   # The #proxy_path attribute method returns a <code>Pathname</code>
   # giving the local proxy file location.  Querying the attribute does 
   # <i>not</i> upload, download, synchronize, or otherwise interact with
-  # the cloud or local proxy file in any way -- just returns a constructed
-  # a Pathname.
+  # the cloud or local proxy file in any way -- it just returns a constructed
+  # Pathname.  The <code>proxy_path</code> is a deterministic function of the
+  # cloud key and Defog::Proxy#proxy_root, so you can rely on it not
+  # changing between independent accesses to a cloud file.
   #  
   class Handle
 
     attr_reader :key
     attr_reader :proxy #:nodoc:
+
+    # Pathname where proxy file is, was, or will be located.  
     attr_reader :proxy_path
 
     def initialize(proxy, key) #:nodoc:

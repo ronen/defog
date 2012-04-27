@@ -10,12 +10,12 @@ shared_examples "a handle" do |proxyargs|
     @handle = @proxy.file(key)
   end
 
-  it "should report exist? true if remode cloud file exists" do
+  it "should report exist? true if remote cloud file exists" do
     create_remote("i exist")
     @handle.should be_exist
   end
 
-  it "should report exist? false if remode cloud file does not exists" do
+  it "should report exist? false if remote cloud file does not exists" do
     @handle.should_not be_exist
   end
 
