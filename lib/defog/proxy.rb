@@ -54,7 +54,7 @@ module Defog
       @proxy_root = Pathname.new(opts.delete(:proxy_root)) if opts.proxy_root
       @persist = opts.delete(:persist)
       @max_cache_size = opts.delete(:max_cache_size)
-      @open_proxy_paths = Set.new
+      @reserved_proxy_paths = Set.new
 
       @fog_wrapper = FogWrapper.connect(opts)
 
@@ -111,39 +111,43 @@ module Defog
       end
     end
 
-    def open_proxy_file(handle) #:nodoc:
-      manage_cache(handle) if max_cache_size
-      @open_proxy_paths << handle.proxy_path
     end
 
-    def close_proxy_file(handle) #:nodoc:
-      @open_proxy_paths.delete handle.proxy_path
+    ###############################
+    # public-but-internal methods
+    #
+
+    def reserve_proxy_path(proxy_path) #:nodoc:
+      @reserved_proxy_paths << proxy_path
     end
 
-    private
+    def release_proxy_path(proxy_path) #:nodoc:
+      @reserved_proxy_paths.delete proxy_path
+    end
 
-    def manage_cache(handle)
-      remote_size = handle.size
-      proxy_path = handle.proxy_path
+    def manage_cache(want_size, proxy_path) #:nodoc:
+      return if max_cache_size.nil?
+      return if want_size.nil?
+      return if want_size <= 0
 
       # find available space (not counting current proxy)
       available = max_cache_size
       proxy_root.find { |path| available -= path.size if path.file? and path != proxy_path}
-      return if available >= remote_size
+      return if available >= want_size
 
-      space_needed = remote_size - available
+      space_needed = want_size - available
 
       # find all paths in the cache that aren't currently open (not
       # counting current proxy)
       candidates = []
-      proxy_root.find { |path| candidates << path if path.file? and not @open_proxy_paths.include?(path) and path != proxy_path}
+      proxy_root.find { |path| candidates << path if path.file? and not @reserved_proxy_paths.include?(path) and path != proxy_path}
 
       # take candidates in LRU order until that would be enough space
       would_free = 0
       candidates = Set.new(candidates.sort_by(&:atime).take_while{|path| (would_free < space_needed).tap{|condition| would_free += path.size}})
 
       # still not enough...?
-      raise Error::CacheFull, "No room in cache for #{handle.key.inspect}: size=#{remote_size} available=#{available} can_free=#{would_free}, max_cache_size=#{max_cache_size}" if would_free < space_needed
+      raise Error::CacheFull, "No room in cache for #{proxy_path.relative_path_from(proxy_root)}: size=#{want_size} available=#{available} can_free=#{would_free} (max_cache_size=#{max_cache_size})" if would_free < space_needed
 
       # LRU order may have taken more than needed, if last file was a big
       # chunk.  So take another pass, eliminating files that aren't needed.

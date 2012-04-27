@@ -170,7 +170,14 @@ If this would not free up enough space (because of open proxies or just
 because the remote is larger than the cache), raises
 Defog::Error::CacheFull and doesn't actually delete anything.
 
-You can also manually delete an individual persisted file, such as via:
+For writeable proxes, of course Defog doesn't know in advance the size of
+the data you will write into proxy file.  As a crude estimate, if the
+remote file already exists, Defog will reserve the same amount of space.
+Instead, you can tell Defog the expected size via:
+
+  defog.file("key", "w", :size_hint => size-in-bytes)
+
+You can also manage the cache manually, by explicitly deleting an individual persisted proxy files, such as via:
 
         defog.file("key").proxy_path.unlink
 

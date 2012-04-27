@@ -33,7 +33,7 @@ module Defog
   class File < ::File
 
     def initialize(opts={}, &block) #:nodoc:
-      opts = opts.keyword_args(:handle => :required, :mode => :required, :persist => :optional)
+      opts = opts.keyword_args(:handle => :required, :mode => :required, :persist => :optional, :size_hint => :optional)
       @handle = opts.handle
       @persist = opts.persist
 
@@ -42,21 +42,28 @@ module Defog
       proxy_path.dirname.mkpath
       case opts.mode
       when "r"
-        create_proxy
+        download = true
+        @upload = false
+        cache_size = @handle.size
       when "w", "w+"
+        download = false
         @upload = true
+        cache_size = opts.size_hint || @handle.size
       when "r+", "a", "a+"
-        create_proxy
+        download = true
         @upload = true
+        cache_size = [opts.size_hint, @handle.size].compact.max
       else
         raise ArgumentError, "Invalid mode #{opts.mode.inspect}"
       end
 
+      @handle.proxy.manage_cache(cache_size, proxy_path)
+      @handle.proxy.reserve_proxy_path(proxy_path)
+      download_proxy if download
       super(proxy_path, opts.mode, &block)
     end
 
-    def create_proxy
-      @handle.proxy.open_proxy_file(@handle)
+    def download_proxy
       @handle.proxy.fog_wrapper.get_file(@handle.key, @handle.proxy_path)
     end
 
@@ -82,11 +89,12 @@ module Defog
     def close(opts={})
       opts = opts.keyword_args(:persist => @persist, :synchronize => true)
       super()
-      if @handle.proxy_path.exist?
+      proxy_path = @handle.proxy_path
+      if proxy_path.exist?
         upload_proxy if @upload and opts.synchronize
-        @handle.proxy_path.unlink unless opts.persist
+        proxy_path.unlink unless opts.persist
       end
-      @handle.proxy.close_proxy_file(@handle)
+      @handle.proxy.release_proxy_path(proxy_path)
     end
   end
 end

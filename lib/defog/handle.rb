@@ -93,7 +93,7 @@ module Defog
     # to suppress deleting the file and so maintain the file after closing.   See File#close for more
     # details.
     def open(mode, opts={}, &block)
-      opts = opts.keyword_args(:persist => @proxy.persist)
+      opts = opts.keyword_args(:persist => @proxy.persist, :size_hint => :optional)
       File.open(opts.merge(:handle => self, :mode => mode), &block)
     end
 

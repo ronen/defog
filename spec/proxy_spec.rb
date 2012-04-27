@@ -66,6 +66,10 @@ shared_examples "a proxy" do |args|
       @proxy.proxy_root.mkpath
     end
 
+    it "should fail normally when trying to proxy a file that doesn't exist" do
+      expect { @proxy.file("nonesuch", "r") }.should raise_error(Defog::Error::NoCloudFile)
+    end
+
     it "should raise an error trying to proxy a file larger than the cache" do
       create_remote("x" * 101)
       expect { @proxy.file(key, "r") }.should raise_error(Defog::Error::CacheFull)
@@ -92,20 +96,31 @@ shared_examples "a proxy" do |args|
       other_proxy_path("c").should_not be_exist
     end
 
+    it "should delete proxies to make room for hinted size" do
+      create_other_proxy("a", 10)
+      create_other_proxy("b", 30)
+      create_other_proxy("c", 40)
+      expect { @proxy.file(key, "w", :size_hint => 80) do end }.should_not raise_error(Defog::Error::CacheFull)
+      proxy_path.should be_exist
+      other_proxy_path("a").should be_exist
+      other_proxy_path("b").should_not be_exist
+      other_proxy_path("c").should_not be_exist
+    end
+
     it "should not delete proxies that are open" do
       create_other_proxy("a", 20)
       create_other_proxy("b", 20)
       create_other_remote("R", 30)
-      create_other_remote("S", 30)
       create_remote("x" * 30)
-      @proxy.file("R", "r") do
-        @proxy.file("S", "r") do
+      @proxy.file(other_key("R"), "r") do
+        @proxy.file(other_key("S"), "w") do
+          create_other_proxy("S", 30)
           expect { @proxy.file(key, "r") do end }.should_not raise_error(Defog::Error::CacheFull)
           proxy_path.should be_exist
-          other_proxy_path("a").should_not be_exist
-          other_proxy_path("b").should_not be_exist
           other_proxy_path("R").should be_exist
           other_proxy_path("S").should be_exist
+          other_proxy_path("a").should_not be_exist
+          other_proxy_path("b").should_not be_exist
         end
       end
     end
@@ -113,7 +128,7 @@ shared_examples "a proxy" do |args|
     it "should delete proxies that are no longer open" do
       create_other_remote("R", 60)
       create_remote("z" * 60)
-      @proxy.file("R", "r") do end
+      @proxy.file(other_key("R"), "r") do end
       other_proxy_path("R").should be_exist
       expect { @proxy.file(key, "r") do end }.should_not raise_error(Defog::Error::CacheFull)
       proxy_path.should be_exist
@@ -123,11 +138,11 @@ shared_examples "a proxy" do |args|
     it "should not delete proxies if there wouldn't be enough space" do
       create_other_proxy("a", 20)
       create_other_proxy("b", 20)
-      create_other_remote("r", 30)
-      create_other_remote("s", 30)
+      create_other_remote("R", 30)
+      create_other_remote("S", 30)
       create_remote("z" * 50)
-      @proxy.file("r", "r") do
-        @proxy.file("s", "r") do
+      @proxy.file(other_key("R"), "r") do
+        @proxy.file(other_key("S"), "r") do
           expect { @proxy.file(key, "r") do end }.should raise_error(Defog::Error::CacheFull)
           proxy_path.should_not be_exist
           other_proxy_path("a").should be_exist
@@ -138,22 +153,28 @@ shared_examples "a proxy" do |args|
       end
     end
 
-    private
+  end
 
-    def create_other_proxy(otherkey, size)
-      other_proxy_path(otherkey).open("w") do |f|
-        f.write("x" * size)
-      end
+  private
+
+  def other_key(okey)
+    "#{key}-#{okey}"
+  end
+
+  def create_other_proxy(okey, size)
+    path = other_proxy_path(okey)
+    path.dirname.mkpath
+    path.open("w") do |f|
+      f.write("x" * size)
     end
+  end
 
-    def other_proxy_path(otherkey)
-      @proxy.file(otherkey).proxy_path
-    end
+  def other_proxy_path(okey)
+    @proxy.file(other_key(okey)).proxy_path
+  end
 
-    def create_other_remote(otherkey, size)
-      @proxy.fog_directory.files.create(:key => otherkey, :body => "x" * size)
-    end
-
+  def create_other_remote(okey, size)
+    @proxy.fog_directory.files.create(:key => other_key(okey), :body => "x" * size)
   end
 
 end
