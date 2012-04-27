@@ -1,5 +1,6 @@
 module Defog
-  # Create a Defog::File proxy instance via Defog::Proxy#file, such as
+  # Create a Defog::File proxy instance via Defog::Handle#open or via the
+  # shortcut from Defog::Proxy#file, such as
   #
   #    defog = Defog::Proxy.new(:provider => :AWS, :aws_access_key_id => access_key, ...)
   #
@@ -28,8 +29,17 @@ module Defog
   # 
   # (Note that the proxy file path has the same file extension as the cloud key string.)
   #
-  # Upon closing the proxy file, in normal use the cloud storage gets synchronized and
-  # the proxy deleted.  See File#close for more details.
+  # Upon closing the proxy file, in normal use the cloud storage gets
+  # synchronized if needed and the proxy deleted.  To prevent deletion, you
+  # can use:
+  #    defog.file("key", "r", :persist => true)
+  # See File#close for more details.
+  #
+  # If you are managing your cache size, when opening a proxy for writing you may want to provide a hint as
+  # to the expected size of the data:
+  #    defog.file("key", "w", :size_hint => 500.kilobytes)
+  # See README for more details.
+  #
   class File < ::File
 
     def initialize(opts={}, &block) #:nodoc:

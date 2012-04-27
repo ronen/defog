@@ -92,6 +92,12 @@ module Defog
     #    :persist => true
     # to suppress deleting the file and so maintain the file after closing.   See File#close for more
     # details.
+    #
+    # If you are managing your cache size, when opening a proxy for writing
+    # you may want to provide a hint as to the expected size of the data:
+    #    :size_hint => 500.kilobytes
+    # See README for more details.
+    #
     def open(mode, opts={}, &block)
       opts = opts.keyword_args(:persist => @proxy.persist, :size_hint => :optional)
       File.open(opts.merge(:handle => self, :mode => mode), &block)
