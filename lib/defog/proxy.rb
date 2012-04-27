@@ -111,6 +111,18 @@ module Defog
       end
     end
 
+    # Iterate through the cloud storage, yielding a Defog::Handle for each
+    # remote file.
+    #
+    # If no block is given, an enumerator is returned.
+    def each
+      if block_given?
+        @fog_wrapper.fog_directory.files.all.each do |fog_model|
+          yield file(fog_model.key)
+        end
+      else
+        to_enum(:each)
+      end
     end
 
     ###############################

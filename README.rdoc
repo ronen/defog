@@ -98,6 +98,11 @@ In addition, the handle allows you to look up the path where the local proxy fil
 
     defog.file("key").proxy_path  # => Pathname where proxy file is, was, or will be
 
+You can also iterate through handles of all cloud files, e.g.:
+
+    defog.each { |handle| puts handle.key }
+    defog.each.select { |handle| handle.last_modified < 12.hours.ago }
+
 === Persistence
 
 By default, Defog will delete the local proxy when closing a file.

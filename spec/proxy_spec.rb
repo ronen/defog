@@ -39,6 +39,31 @@ shared_examples "a proxy" do |args|
     end
   end
 
+  context "iteration" do
+
+    before(:each) do
+      @proxy = Defog::Proxy.new(args)
+      @proxy.fog_directory.files.all.each do |model| model.destroy end
+      create_other_remote("i0", 10)
+      create_other_remote("i1", 10)
+      create_other_remote("i2", 10)
+    end
+
+    it "should iterate through remotes" do
+      seen = []
+      @proxy.each do |handle|
+        seen << handle.key
+      end
+      seen.should =~ [other_key("i0"), other_key("i1"), other_key("i2")]
+    end
+
+    it "should return an enumerator" do
+      @proxy.each.map(&:key).should =~ [other_key("i0"), other_key("i1"), other_key("i2")]
+    end
+
+  end
+
+
   context "proxy root location" do
     it "should default proxy root to tmpdir/defog" do
       proxy = Defog::Proxy.new(args)
