@@ -1,7 +1,7 @@
 = defog
 
-Defog wraps the [fog](https://rubygems.org/gems/fog) gem (specifically,
-[Fog::Storage](http://fog.io/1.3.1/storage/)), providing access to files
+Defog wraps the fog[https://rubygems.org/gems/fog] gem (specifically,
+{Fog::Storage}[http://fog.io/1.3.1/storage/]), providing access to files
 stored in the cloud via proxy files on the local file system.
 A proxy file can be
 * Read-only:  A local cached copy of a cloud file.
@@ -10,7 +10,7 @@ A proxy file can be
 
 Defog thus lets you use ordinary programmatic tools to access and
 manipulate your cloud data.  Thanks to the magic of
-[fog](https://rubygems.org/gems/fog) it works across cloud providers, and
+fog[https://rubygems.org/gems/fog] it works across cloud providers, and
 it also works with the local file system as a "provider" so that you can,
 e.g. use the local file system for development and the cloud for
 production.
@@ -100,38 +100,83 @@ In addition, the handle allows you to look up the path where the local proxy fil
 
 === Persistence
 
-By default, the local proxy files are deleted when closed.  However, it is
-possible to persist the local proxy, so that it if the remote is accessed
-again-- whether in the same program execution or at a later time or by a
-different program--the data will not need to be transferred again.  Do so
-via
+By default, Defog will delete the local proxy when closing a file.
+However, it is possible to keep the local proxy file so that it if the
+remote is accessed again the data will not need to be transferred again.
+(This is true even between executions of the program: a Defog::Proxy
+instance can start with proxy files already in place, and it will use them.)
+
+Persistence can be enabled by default for the Defog::Proxy instance via:
+
+        defog = Defog::Proxy.new(:provider => ..., :persist => true)
+
+And/or persistence can be overridden on a per-file basis at proxy open time:
 
         file = defog.file("key/of/file", mode, :persist => true)
 
-or
+or at proxy close time:
 
         file.close(:persist => true)
 
 When opening a file whose local proxy has been persisted, Defog checks to see if
-the local proxy is out of date and if so replaces it.
+the local proxy is out of date and if so replaces it (via MD5 digests).
 
-Currently, Defog does not natively support a way to explictly delete the
-locally persisted file (other than opening and closing it again without
-:persist => true).  But it's fair game to delete it outside of Defog, such
-as via a cron job that cleans out old files.
+== Local proxy file cache
 
-=== Local Proxy File Location
+For basic usage, you don't need to worry about the cache, the default
+settings work fine.  But if you will be persisting proxy files you may want to
+manage the cache more carefully.
 
-Local proxy files are stored by default in
+=== Cache location
 
-        #{tmproot}/defog/#{provider}/#{location}/#{key}
+The cache for a given Defog::Proxy is rooted at a directory on the local
+file system.  You can set and query the root via
 
-where <code>tmproot</code> is <code>Rails.root+"tmp"</code> if Rails is
-defined, otherwise <code>Dir.tmpdir()</code>.  For :AWS,
-<code>location</code> is the bucket name, and for :local it's the
-<code>local_root</code> directory path with slashes replaced with underscores.
+    defog = Defog::Proxy.new(:provider => ..., :proxy_root => "/my/chosen/root")
+    defog.proxy_root    # => returns a Pathname
 
-See the documentation for configuring other locations.
+If you don't specify a root, Defog uses one of two defaults:
+
+    {Rails.root}/tmp/defog/{provider}-{location}  # if Rails is defined
+    {Dir.tmpdir}/defog/{provider}-{location}      # if Rails is not defined
+
+In these, <code>location</code> disambiguates between Defog::Proxy instances.
+For :AWS it's the bucket name and for :local it's the
+<code>local_root</code> directory path with slashes replaced with dashes.
+
+[Why cache local files, you ask?  Why not bypass this whole cache thing if
+using :local?  Well, the motivation for supporting :local is to use it in
+development and use :AWS in production.  So, to more faithfully mimic
+production behavior, :local mode goes through the same code path and same
+caching mechanism.]
+
+Within the cache, indvidiual proxy files are located by treating the key as
+a path relative to the proxy root (with slashes in the key indicating
+subdirectories in the path).
+
+=== Cache size management
+
+Defog can perform simple size management of the local proxy file cache.  This is
+of course useful mostly when persisting files.
+
+You can specify a maximum cache size via:
+
+        defog = Defog::Proxy.new(:provider => ..., :max_cache_size => size-in-bytes)
+
+If a maximum size is set, then before downloading data to create a proxy,
+Defog will check the space available and delete persisted proxy files as needed
+in LRU order.  Does not delete files for proxies that are currently open.
+If this would not free up enough space (because of open proxies or just
+because the remote is larger than the cache), raises
+Defog::Error::CacheFull and doesn't actually delete anything.
+
+You can also manually delete an individual persisted file, such as via:
+
+        defog.file("key").proxy_path.unlink
+
+And it's fair game to delete proxy files outside of Defog, such as via a
+cron job.  Of course in these cases it's up to you to make sure not to
+unintentionally delete a proxy file that's currently open.
 
 == Installation
 
@@ -141,9 +186,8 @@ Gemfile:
 == Compatibility
 
 Defog has (so far) been tested on MRI 1.9.3 using
-[fog](https://rubygems.org/gems/fog) storage providers :local and :AWS
+fog[https://rubygems.org/gems/fog] storage providers :local and :AWS
 
 == Copyright
 
 Released under the MIT License.  See LICENSE for details.
-

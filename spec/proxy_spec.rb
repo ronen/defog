@@ -2,25 +2,7 @@ require 'spec_helper'
 
 shared_examples "a proxy" do |args|
 
-  it "should default proxy root to tmpdir/defog" do
-    proxy = Defog::Proxy.new(args)
-    proxy.proxy_root.should == Pathname.new(Dir.tmpdir) + "defog" + proxy.provider.to_s + proxy.location
-  end
-
-  it "should default proxy root to Rails.root" do
-    with_rails_defined do
-      proxy = Defog::Proxy.new(args)
-      proxy.proxy_root.should == Rails.root + "tmp/defog" + proxy.provider.to_s + proxy.location
-    end
-  end
-
-  it "should accept proxy root parameter" do
-    path = Pathname.new("/a/random/path")
-    proxy = Defog::Proxy.new(args.merge(:proxy_root => path))
-    proxy.proxy_root.should == path
-  end
-
-  context do
+  context "basic features" do
     before(:each) do
       @proxy = Defog::Proxy.new(args)
     end
@@ -55,6 +37,123 @@ shared_examples "a proxy" do |args|
       create_remote("hello")
       @proxy.fog_directory.files.get(key).body.should == "hello"
     end
+  end
+
+  context "proxy root location" do
+    it "should default proxy root to tmpdir/defog" do
+      proxy = Defog::Proxy.new(args)
+      proxy.proxy_root.should == Pathname.new(Dir.tmpdir) + "defog" + proxy.provider.to_s + proxy.location
+    end
+
+    it "should default proxy root to Rails.root" do
+      with_rails_defined do
+        proxy = Defog::Proxy.new(args)
+        proxy.proxy_root.should == Rails.root + "tmp/defog" + proxy.provider.to_s + proxy.location
+      end
+    end
+
+    it "should accept proxy root parameter" do
+      path = Pathname.new("/a/random/path")
+      proxy = Defog::Proxy.new(args.merge(:proxy_root => path))
+      proxy.proxy_root.should == path
+    end
+  end
+
+  context "cache management" do
+    before(:each) do
+      @proxy = Defog::Proxy.new(args.merge(:max_cache_size => 100, :persist => true))
+      @proxy.proxy_root.rmtree
+      @proxy.proxy_root.mkpath
+    end
+
+    it "should raise an error trying to proxy a file larger than the cache" do
+      create_remote("x" * 101)
+      expect { @proxy.file(key, "r") }.should raise_error(Defog::Error::CacheFull)
+      proxy_path.should_not be_exist
+    end
+
+    it "should not count existing proxy in total" do
+      create_proxy("y" * 70)
+      create_remote("x" * 70)
+      expect { @proxy.file(key, "r") do end }.should_not raise_error(Defog::Error::CacheFull)
+      proxy_path.should be_exist
+      proxy_path.read.should == remote_body
+    end
+
+    it "should delete proxies to make room" do
+      create_other_proxy("a", 10)
+      create_other_proxy("b", 30)
+      create_other_proxy("c", 40)
+      create_remote("x" * 80)
+      expect { @proxy.file(key, "r") do end }.should_not raise_error(Defog::Error::CacheFull)
+      proxy_path.should be_exist
+      other_proxy_path("a").should be_exist
+      other_proxy_path("b").should_not be_exist
+      other_proxy_path("c").should_not be_exist
+    end
+
+    it "should not delete proxies that are open" do
+      create_other_proxy("a", 20)
+      create_other_proxy("b", 20)
+      create_other_remote("R", 30)
+      create_other_remote("S", 30)
+      create_remote("x" * 30)
+      @proxy.file("R", "r") do
+        @proxy.file("S", "r") do
+          expect { @proxy.file(key, "r") do end }.should_not raise_error(Defog::Error::CacheFull)
+          proxy_path.should be_exist
+          other_proxy_path("a").should_not be_exist
+          other_proxy_path("b").should_not be_exist
+          other_proxy_path("R").should be_exist
+          other_proxy_path("S").should be_exist
+        end
+      end
+    end
+
+    it "should delete proxies that are no longer open" do
+      create_other_remote("R", 60)
+      create_remote("z" * 60)
+      @proxy.file("R", "r") do end
+      other_proxy_path("R").should be_exist
+      expect { @proxy.file(key, "r") do end }.should_not raise_error(Defog::Error::CacheFull)
+      proxy_path.should be_exist
+      other_proxy_path("R").should_not be_exist
+    end
+
+    it "should not delete proxies if there wouldn't be enough space" do
+      create_other_proxy("a", 20)
+      create_other_proxy("b", 20)
+      create_other_remote("r", 30)
+      create_other_remote("s", 30)
+      create_remote("z" * 50)
+      @proxy.file("r", "r") do
+        @proxy.file("s", "r") do
+          expect { @proxy.file(key, "r") do end }.should raise_error(Defog::Error::CacheFull)
+          proxy_path.should_not be_exist
+          other_proxy_path("a").should be_exist
+          other_proxy_path("b").should be_exist
+          other_proxy_path("r").should be_exist
+          other_proxy_path("s").should be_exist
+        end
+      end
+    end
+
+    private
+
+    def create_other_proxy(otherkey, size)
+      other_proxy_path(otherkey).open("w") do |f|
+        f.write("x" * size)
+      end
+    end
+
+    def other_proxy_path(otherkey)
+      @proxy.file(otherkey).proxy_path
+    end
+
+    def create_other_remote(otherkey, size)
+      @proxy.fog_directory.files.create(:key => otherkey, :body => "x" * size)
+    end
+
   end
 
 end

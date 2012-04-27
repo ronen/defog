@@ -3,6 +3,9 @@ module Defog
 
     class NoCloudFile < Error
     end
+
+    class CacheFull < Error
+    end
   end
 
 end

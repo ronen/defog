@@ -1,17 +1,20 @@
 require "hash_keyword_args"
-require "tmpdir"
 require "pathname"
+require "set"
+require "tmpdir"
 
 module Defog
   class Proxy
 
-    attr_reader :proxy_root     # 
+    attr_reader :proxy_root
+    attr_reader :persist
+    attr_reader :max_cache_size
     attr_reader :fog_wrapper    # :nodoc:
 
     # Opens a <code>Fog</code> cloud storage connection to map to a corresponding proxy
     # directory.  Use via, e.g.,
     #
-    #     Defog::Proxy.new(:provider => :AWS, :aws_access_key_id => access_key, ...)
+    #     defog = Defog::Proxy.new(:provider => :AWS, :aws_access_key_id => access_key, ...)
     #
     # The <code>:provider</code> and its corresponding options must be
     # specified as per <code>Fog::Storage.new</code>.  Currently, only
@@ -31,10 +34,27 @@ module Defog
     # to worry about it.  But if you do care, you can specify the option:
     #   :proxy_root => "/root/for/this/proxy/files"
     #
+    # You can turn on persistence of local proxy files by specifying
+    #   :persist => true
+    # The persistence behavior can be overriden on a per-file basis when
+    # opening a proxy (see Defog::Handle#open)
+    #
+    # You can enable cache management by specifying a max cache size in
+    # bytes, e.g.
+    #    :max_cache_size => 3.gigabytes
+    # See the README for discussion.  [Number#gigabytes is defined in
+    # Rails' ActiveSupport core extensions]
     def initialize(opts={})
-      opts = opts.keyword_args(:provider => :required, :proxy_root => :optional, :OTHERS => :optional)
+      opts = opts.keyword_args(:provider => :required,
+                               :proxy_root => :optional,
+                               :persist => :optional,
+                               :max_cache_size => :optional,
+                               :OTHERS => :optional)
 
       @proxy_root = Pathname.new(opts.delete(:proxy_root)) if opts.proxy_root
+      @persist = opts.delete(:persist)
+      @max_cache_size = opts.delete(:max_cache_size)
+      @open_proxy_paths = Set.new
 
       @fog_wrapper = FogWrapper.connect(opts)
 
@@ -69,12 +89,13 @@ module Defog
       @fog_wrapper.fog_directory
     end
 
-    # Proxy a remote cloud file.  Returns a Defog::Handle object that
+    # Proxy a remote cloud file.  Returns or yields a Defog::Handle object that
     # represents the file. 
     #
-    # If a <code>mode</code> is specified given opens a proxy file via
+    # If a <code>mode</code> is given, opens a proxy file via
     # Defog::Handle#open (passing it the mode and other options and
-    # optional block), returning instead the Defog::File object.
+    # optional block), returning or yielding instead the Defog::File object.
+    #
     #
     # Thus 
     #    proxy.file("key", mode, options, &block)
@@ -88,6 +109,55 @@ module Defog
       when block then block.call(handle)
       else handle
       end
+    end
+
+    def open_proxy_file(handle) #:nodoc:
+      manage_cache(handle) if max_cache_size
+      @open_proxy_paths << handle.proxy_path
+    end
+
+    def close_proxy_file(handle) #:nodoc:
+      @open_proxy_paths.delete handle.proxy_path
+    end
+
+    private
+
+    def manage_cache(handle)
+      remote_size = handle.size
+      proxy_path = handle.proxy_path
+
+      # find available space (not counting current proxy)
+      available = max_cache_size
+      proxy_root.find { |path| available -= path.size if path.file? and path != proxy_path}
+      return if available >= remote_size
+
+      space_needed = remote_size - available
+
+      # find all paths in the cache that aren't currently open (not
+      # counting current proxy)
+      candidates = []
+      proxy_root.find { |path| candidates << path if path.file? and not @open_proxy_paths.include?(path) and path != proxy_path}
+
+      # take candidates in LRU order until that would be enough space
+      would_free = 0
+      candidates = Set.new(candidates.sort_by(&:atime).take_while{|path| (would_free < space_needed).tap{|condition| would_free += path.size}})
+
+      # still not enough...?
+      raise Error::CacheFull, "No room in cache for #{handle.key.inspect}: size=#{remote_size} available=#{available} can_free=#{would_free}, max_cache_size=#{max_cache_size}" if would_free < space_needed
+
+      # LRU order may have taken more than needed, if last file was a big
+      # chunk.  So take another pass, eliminating files that aren't needed.
+      # Do this in reverse size order, since we want to keep big files in
+      # the cache if possible since they're most expensive to replace.
+      candidates.sort_by(&:size).reverse.each do |path|
+        if (would_free - path.size) > space_needed
+          candidates.delete path
+          would_free -= path.size
+        end
+      end
+
+      # free the remaining candidates
+      candidates.each(&:unlink)
     end
 
   end

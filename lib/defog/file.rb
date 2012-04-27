@@ -31,34 +31,39 @@ module Defog
   # Upon closing the proxy file, in normal use the cloud storage gets synchronized and
   # the proxy deleted.  See File#close for more details.
   class File < ::File
-    def self.get(opts={}, &block) #:nodoc:
+
+    def initialize(opts={}, &block) #:nodoc:
       opts = opts.keyword_args(:handle => :required, :mode => :required, :persist => :optional)
+      @handle = opts.handle
+      @persist = opts.persist
 
-      handle = opts.handle
-      key = handle.key
-      proxy_path = handle.proxy_path
-
+      key = @handle.key
+      proxy_path = @handle.proxy_path
       proxy_path.dirname.mkpath
-
       case opts.mode
-      when "r" then
-        handle.proxy.fog_wrapper.get_file(key, proxy_path)
-      when "w", "w+" then
-        opts[:upload] = true
-      when "r+", "a", "a+" then
-        handle.proxy.fog_wrapper.get_file(key, proxy_path)
-        opts[:upload] = true
+      when "r"
+        create_proxy
+      when "w", "w+"
+        @upload = true
+      when "r+", "a", "a+"
+        create_proxy
+        @upload = true
       else
         raise ArgumentError, "Invalid mode #{opts.mode.inspect}"
       end
 
-      self.open(opts, &block)
+      super(proxy_path, opts.mode, &block)
     end
 
-    def initialize(opts={}, &block) #:nodoc:
-      @defog = opts.keyword_args(:handle => :required, :mode => :required, :upload => :optional, :persist => :optional)
-      super(@defog.handle.proxy_path, @defog.mode, &block)
+    def create_proxy
+      @handle.proxy.open_proxy_file(@handle)
+      @handle.proxy.fog_wrapper.get_file(@handle.key, @handle.proxy_path)
     end
+
+    def upload_proxy
+      @handle.proxy.fog_wrapper.put_file(@handle.key, @handle.proxy_path) 
+    end
+
 
     # Closes the proxy file and synchronizes the cloud storage (if it was
     # opened as writeable) then deletes the proxy file.
@@ -75,13 +80,13 @@ module Defog
     # (This will override the setting of <code>:persist</code> passed to Proxy#file)
     #
     def close(opts={})
-      opts = opts.keyword_args(:persist => @defog.persist, :synchronize => true)
+      opts = opts.keyword_args(:persist => @persist, :synchronize => true)
       super()
-      handle = @defog.handle
-      if handle.proxy_path.exist?
-        handle.proxy.fog_wrapper.put_file(handle.key, handle.proxy_path) if @defog.upload and opts.synchronize
-        handle.proxy_path.unlink unless opts.persist
+      if @handle.proxy_path.exist?
+        upload_proxy if @upload and opts.synchronize
+        @handle.proxy_path.unlink unless opts.persist
       end
+      @handle.proxy.close_proxy_file(@handle)
     end
   end
 end
