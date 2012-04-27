@@ -10,7 +10,7 @@ shared_examples "a proxy" do |args|
   it "should default proxy root to Rails.root" do
     with_rails_defined do
       proxy = Defog::Proxy.new(args)
-      proxy.proxy_root.should == Rails.root + "defog" + proxy.provider.to_s + proxy.location
+      proxy.proxy_root.should == Rails.root + "tmp/defog" + proxy.provider.to_s + proxy.location
     end
   end
 

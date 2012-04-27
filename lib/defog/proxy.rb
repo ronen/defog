@@ -39,7 +39,7 @@ module Defog
       @fog_wrapper = FogWrapper.connect(opts)
 
       @proxy_root ||= case
-                      when defined?(Rails) then Rails.root
+                      when defined?(Rails) then Rails.root + "tmp"
                       else Pathname.new(Dir.tmpdir)
                       end + "defog" + provider.to_s + location
 
