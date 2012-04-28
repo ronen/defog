@@ -50,7 +50,7 @@ Open a proxy to a remote file by creating a <code>Defog::File</code> object:
         end
 
 <code>mode</code> can be "r", "r+", "w", "w+", "a", or "a+" with the usual
-semantics. 
+semantics, and can be suffixed with "b" or with ":" and encoding as usual.
 
 When opened in a readable mode ("r", "r+", "w+", "a+"), first caches the
 cloud file in the local proxy.  When opened in a writeable mode ("r+", "w",

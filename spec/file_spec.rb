@@ -5,6 +5,7 @@ shared_examples "get proxy" do
     create_remote("hello")
     file = @proxy.file(key, @mode)
     File.exist?(file.path).should be_true
+    file.close
   end
 
   it "should raise error if remote doesn't exist" do
@@ -22,13 +23,13 @@ shared_examples "get proxy" do
   it "should use existing proxy if it's valid" do
     create_remote("hello")
     create_proxy("hello")
-    Pathname.any_instance.should_not_receive(:open).with("w")
+    Pathname.any_instance.should_not_receive(:open).with(/^w/)
     @proxy.file(key, @mode)
 
     # doublecheck that should_not_receive was the right
     # thing to test.  will it be received for an invalid proxy?
     create_proxy("goodbye")
-    Pathname.any_instance.should_receive(:open).with("w")
+    Pathname.any_instance.should_receive(:open).with(/^w/)
     @proxy.file(key, @mode)
   end
 end
@@ -41,6 +42,22 @@ shared_examples "read" do
       file.read.should == "read me"
     end
   end
+
+  it "should pass 'b' mode through" do
+    create_remote("binary me")
+    @proxy.file(key, "#{@mode}b") do |file|
+      file.external_encoding.name.should == "ASCII-8BIT"
+    end
+  end
+
+  it "should pass encodings through" do
+    create_remote("encode me")
+    @proxy.file(key, "#{@mode}:EUC-JP:UTF-16") do |file|
+      file.external_encoding.name.should == "EUC-JP"
+      file.internal_encoding.name.should == "UTF-16"
+    end
+  end
+
 end
 
 shared_examples "read after write" do

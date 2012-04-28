@@ -78,11 +78,12 @@ module Defog
 
     # Returns a Defog::File object, which is a specialization of ::File. 
     #
-    # <code>mode</code> can be "r", "r+", "w", "w+", "a", or "a+" with the
+    # <code>mode</code> can be the usual "r", "r+", "w", "w+", "a", or "a+" with the
     # usual semantics.  When opened in a readable mode ("r", "r+", "w+",
     # "a+"), first caches the cloud file in the local proxy.  When opened
     # in a writeable mode ("r+", "w", "w+", "a", "a+"), arranges to upload
-    # the changes back to the cloud file at close time.
+    # the changes back to the cloud file at close time.  The mode can be
+    # suffixed with 'b' or with ':' and encoding specifiers as usual.
     #
     # Like ::File.open, if called with a block yields the file object to
     # the block and ensures the file will be closed when leaving the block.

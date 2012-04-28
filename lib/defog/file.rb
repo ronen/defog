@@ -50,7 +50,9 @@ module Defog
       key = @handle.key
       proxy_path = @handle.proxy_path
       proxy_path.dirname.mkpath
-      case opts.mode
+      re_encoding = /(b|:.*)$/
+      @encoding = opts.mode.match(re_encoding).to_s
+      case opts.mode.sub(re_encoding,'')
       when "r"
         download = true
         @upload = false
@@ -74,11 +76,11 @@ module Defog
     end
 
     def download_proxy
-      @handle.proxy.fog_wrapper.get_file(@handle.key, @handle.proxy_path)
+      @handle.proxy.fog_wrapper.get_file(@handle.key, @handle.proxy_path, @encoding)
     end
 
     def upload_proxy
-      @handle.proxy.fog_wrapper.put_file(@handle.key, @handle.proxy_path) 
+      @handle.proxy.fog_wrapper.put_file(@handle.key, @handle.proxy_path, @encoding) 
     end
 
 

@@ -20,16 +20,18 @@ module Defog #:nodoc: all
       klass.new(opts)
     end
 
-    def get_file(key, path)
+    def get_file(key, path, encoding)
       raise Error::NoCloudFile, "No such file in #{provider} #{location}: #{key}" unless fog_head(key)
       return if path.exist? and Digest::MD5.hexdigest(path.read) == get_md5(key)
-      path.open("w") do |f|
+      path.open("w#{encoding}") do |f|
         f.write(fog_head(key).body)
       end
     end
 
-    def put_file(key, path)
-      fog_directory.files.create(:key => key, :body => path.open)
+    def put_file(key, path, encoding)
+      path.open("r#{encoding}") do |file|
+        fog_directory.files.create(:key => key, :body => file)
+      end
     end
 
     def fog_head(key)
