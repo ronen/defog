@@ -19,6 +19,12 @@ Defog also provides a few simple remote-file management methods to minimize
 the need to dig down into the Fog layer; but full access to the underlying
 fog objects is available should it be needed.
 
+<b>NOTE:</b>  Currently the only supported providers are :local and :AWS since
+those are what the author currently uses.  Please fork and add others!
+(There's just a very small amount of provider-specific code in {one
+file}[https://github.com/ronen/defog/blob/master/lib/defog/fog_wrapper.rb],
+plus spec examples.)
+
 == Usage Summary
 
 Full Rdoc is available at http://rubydoc.info/gems/defog
