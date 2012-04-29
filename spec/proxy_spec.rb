@@ -67,13 +67,13 @@ shared_examples "a proxy" do |args|
   context "proxy root location" do
     it "should default proxy root to tmpdir/defog" do
       proxy = Defog::Proxy.new(args)
-      proxy.proxy_root.should == Pathname.new(Dir.tmpdir) + "defog" + proxy.provider.to_s + proxy.location
+      proxy.proxy_root.should == Pathname.new(Dir.tmpdir) + "defog" + "#{proxy.provider.to_s}-#{proxy.location}"
     end
 
     it "should default proxy root to Rails.root" do
       with_rails_defined do
         proxy = Defog::Proxy.new(args)
-        proxy.proxy_root.should == Rails.root + "tmp/defog" + proxy.provider.to_s + proxy.location
+        proxy.proxy_root.should == Rails.root + "tmp/defog" + "#{proxy.provider.to_s}-#{proxy.location}"
       end
     end
 
@@ -216,7 +216,7 @@ describe Defog::Proxy do
     it_should_behave_like "a proxy", args
 
     it "should use the deslashed local_root as the location" do
-      Defog::Proxy.new(args).location.should == LOCAL_CLOUD_PATH.to_s.gsub(%r{/},"_")
+      Defog::Proxy.new(args).location.should == LOCAL_CLOUD_PATH.to_s.gsub(%r{/},"-")
     end
 
   end

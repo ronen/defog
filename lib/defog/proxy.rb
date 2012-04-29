@@ -61,7 +61,7 @@ module Defog
       @proxy_root ||= case
                       when defined?(Rails) then Rails.root + "tmp"
                       else Pathname.new(Dir.tmpdir)
-                      end + "defog" + provider.to_s + location
+                      end + "defog" + "#{provider}-#{location}"
 
     end
 
