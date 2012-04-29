@@ -58,14 +58,10 @@ Open a proxy to a remote file by creating a <code>Defog::File</code> object:
 <code>mode</code> can be "r", "r+", "w", "w+", "a", or "a+" with the usual
 semantics, and can be suffixed with "b" or with ":" and encoding as usual.
 
-When opened in a readable mode ("r", "r+", "w+", "a+"), first caches the
+When opened in a readable mode ("r", "r+", "w+", "a+"), Defog first caches the
 cloud file in the local proxy.  When opened in a writeable mode ("r+", "w",
-"w+", "a", "a+"), arranges to upload the changes back to the cloud file
+"w+", "a", "a+"), Defog arranges to upload the changes back to the cloud file
 at close time.
-
-Closing the file object (explicitly or implicitly at the end of
-the block) synchronizes the local proxy with the remote storage and (by
-default) deletes the local proxy file.
 
 The <code>Defog::File</code> class inherits from <code>::File</code>.  So
 you can use it directly for I/O operations, such as
@@ -82,7 +78,12 @@ You can also access the proxy file via its path, allowing things such as
 
 (Note that the proxy file path has the same file extension as the cloud key string.)
 
-To suppress updating the remote storage, delete the local proxy file before
+Closing the file object (explicitly or implicitly at the end of the block)
+synchronizes the local proxy with the remote storage if needed, and then (by
+default) deletes the local proxy file.
+
+To suppress deleting the local proxy file, use <code>:persist => true</code> (see
+Persistence below).  To suppress updating the remote storage, delete the local proxy file before
 closing (e.g. via <code>File.unlink(file.path)</code>) or pass
 <code>:synchronize => false</code> to the <code>#close</code> method.
 
@@ -195,6 +196,16 @@ You can also manage the cache manually, by explicitly deleting an individual per
 And it's fair game to delete proxy files outside of Defog, such as via a
 cron job.  Of course in these cases it's up to you to make sure not to
 unintentionally delete a proxy file that's currently open.
+
+== Accessing Fog
+
+You can access the underlying fog objects as needed:
+
+   defog = Defog::Proxy.new(:provider => ...)
+
+   defog.fog_connection         # => the Fog::Storage object
+   defog.fog_directory          # => the fog directory that contains the files being proxied
+   defog.file("key").fog_model  # => the fog model for the cloud file
 
 == Installation
 
