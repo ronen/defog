@@ -87,7 +87,7 @@ shared_examples "a proxy" do |args|
   context "cache management" do
     before(:each) do
       @proxy = Defog::Proxy.new(args.merge(:max_cache_size => 100, :persist => true))
-      @proxy.proxy_root.rmtree
+      @proxy.proxy_root.rmtree if @proxy.proxy_root.exist?
       @proxy.proxy_root.mkpath
     end
 
