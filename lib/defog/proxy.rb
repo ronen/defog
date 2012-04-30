@@ -26,12 +26,19 @@ module Defog
     # the same access info but different buckets; they will internally
     # share a single Fog::Storage isntance hence AWS connection.)
     #
-    # By default, each proxy's root directory is placed in a reasonable
-    # safe place, under <code>Rails.root/tmp</code> if Rails is defined
-    # otherwise under <code>Dir.tmpdir</code>.  (More details: within that
-    # directory, the root directory is disambiguated by #provider and
-    # #location, so that multiple Defog::Proxy instances can be
-    # created without collision.)
+    # To further restrict the remote files acted on by this proxy, you
+    # can specify
+    #   defog = Defog::Proxy.new(:provider => ..., :prefix => "my-prefix-string/")
+    # and all keys that you pass to Defog will be prefixed with the given
+    # string before being passed along to Fog.  (Notice that it's up to you to
+    # have a trailing "/" in the prefix if that's what you want.)
+    #
+    # By default, each proxy's cache root directory is placed in a
+    # reasonable safe place, under <code>Rails.root/tmp</code> if Rails is
+    # defined otherwise under <code>Dir.tmpdir</code>.  (More details:
+    # within that directory, the root directory is disambiguated by
+    # #provider and #location, so that multiple Defog::Proxy instances can
+    # be created without collision.)
     #
     # The upshot is that if you have no special constraints you don't need
     # to worry about it.  But if you do care, you can specify the option:
@@ -108,6 +115,11 @@ module Defog
       @fog_wrapper.fog_directory
     end
 
+    # Returns the prefix that was passed
+    def prefix
+      @fog_wrapper.prefix
+    end
+
     # Proxy a remote cloud file.  Returns or yields a Defog::Handle object that
     # represents the file. 
     #
@@ -134,10 +146,10 @@ module Defog
     # remote file.
     #
     # If no block is given, an enumerator is returned.
-    def each
+    def each(&block)
       if block_given?
-        @fog_wrapper.fog_directory.files.all.each do |fog_model|
-          yield file(fog_model.key)
+        @fog_wrapper.each do |key|
+          yield file(key)
         end
       else
         to_enum(:each)

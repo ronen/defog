@@ -58,9 +58,9 @@ shared_examples "a proxy" do |args|
     before(:each) do
       @proxy = Defog::Proxy.new(args)
       @proxy.fog_directory.files.all.each do |model| model.destroy end
-      create_other_remote("i0", 10)
-      create_other_remote("i1", 10)
-      create_other_remote("i2", 10)
+      create_other_remote("i0")
+      create_other_remote("i1")
+      create_other_remote("i2")
     end
 
     it "should iterate through remotes" do
@@ -77,6 +77,33 @@ shared_examples "a proxy" do |args|
 
   end
 
+  context "prefix" do
+    it "should return its prefix" do
+      prefix = "me-first"
+      @proxy = Defog::Proxy.new(args.merge(:prefix => prefix))
+      @proxy.prefix.should == prefix
+    end
+
+    it "should use a prefix" do
+      prefix = "me-first"
+      @proxy = Defog::Proxy.new(args.merge(:prefix => prefix))
+      @proxy.file(key, "w") { |f| f.puts "hello" }
+      @proxy.file(key).fog_model.key.should == prefix + key
+    end
+
+    it "should iterate only matches to prefix" do
+      @proxy = Defog::Proxy.new(args.merge(:prefix => "yes-"))
+      @proxy.fog_directory.files.all.each do |model| model.destroy end
+      create_other_remote("no-n1")
+      create_other_remote("no-n2")
+      create_other_remote("no-n3")
+      create_other_remote("yes-y1")
+      create_other_remote("yes-y2")
+      create_other_remote("yes-y3")
+      @proxy.each.map(&:key).should =~[other_key("y1"), other_key("y2"), other_key("y3")]
+    end
+
+  end
 
   context "proxy root location" do
     it "should default proxy root to tmpdir/defog" do
@@ -197,7 +224,7 @@ shared_examples "a proxy" do |args|
   private
 
   def other_key(okey)
-    "#{key}-#{okey}"
+    "#{okey}-#{key}"
   end
 
   def create_other_proxy(okey, size)
@@ -212,7 +239,7 @@ shared_examples "a proxy" do |args|
     @proxy.file(other_key(okey)).proxy_path
   end
 
-  def create_other_remote(okey, size)
+  def create_other_remote(okey, size=10)
     @proxy.fog_directory.files.create(:key => other_key(okey), :body => "x" * size)
   end
 

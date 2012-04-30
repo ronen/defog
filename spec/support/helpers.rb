@@ -23,11 +23,11 @@ module Helpers
   end
 
   def remote_body
-    @proxy.fog_directory.files.get(key).body
+    @proxy.file(key).fog_model.body
   end
 
   def remote_exist?
-    !!@proxy.fog_directory.files.head(key)
+    @proxy.file(key).exist?
   end
 
   def with_rails_defined

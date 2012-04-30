@@ -72,6 +72,11 @@ module Defog
     end
 
     # Returns the underlying Fog::Model, should you need it for something.
+    # Returns nil if the model doesn't exist.
+    #
+    # If Defog::Proxy.new was passed a :prefix, the Fog::Model key and
+    # Defog::Handle key are related by:
+    #   handle.fog_model.key == defog.prefix + handle.key
     def fog_model
       @proxy.fog_wrapper.fog_head(@key)
     end
