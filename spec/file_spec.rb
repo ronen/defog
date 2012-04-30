@@ -114,6 +114,17 @@ shared_examples "create" do
     expect {remote_body}.should raise_error
   end
 
+  it "should create remote asynchronously if :synchronize => async" do
+    file = @proxy.file(key, @mode)
+    create_proxy("upload me in thread")
+    Thread.should_receive(:new) { |&block|
+      expect {remote_body}.should raise_error
+      block.call
+    }
+    file.close(:synchronize => :async)
+    remote_body.should == "upload me in thread"
+  end
+
 end
 
 shared_examples "update" do
@@ -124,6 +135,18 @@ shared_examples "update" do
     file = @proxy.file(key, @mode)
     create_proxy("upload me")
     file.close
+    remote_body.should == "upload me"
+  end
+
+  it "should overwrite remote asynchronously if :synchronize => :async" do
+    create_remote("overwrite me")
+    file = @proxy.file(key, @mode)
+    create_proxy("upload me")
+    Thread.should_receive(:new) { |&block|
+      remote_body.should == "overwrite me"
+      block.call
+    }
+    file.close(:synchronize => :async)
     remote_body.should == "upload me"
   end
 

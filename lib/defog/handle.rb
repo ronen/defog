@@ -88,19 +88,27 @@ module Defog
     # Like ::File.open, if called with a block yields the file object to
     # the block and ensures the file will be closed when leaving the block.
     #
-    # Normally upon close the proxy file is synchronized as needed and then deleted.
-    # Pass
-    #    :persist => true
-    # to suppress deleting the file and so maintain the file after closing.   See File#close for more
-    # details.
+    # Normally the proxy file gets deleted upon close (after synchronized
+    # as needed) rather than persisted, although the default behavior can
+    # be controlled by Defog::Proxy.new.  To specify persistence behavior
+    # on a per-file basis, use
+    #    :persist => true-or-false
+    # See File#close for more details.
     #
     # If you are managing your cache size, when opening a proxy for writing
     # you may want to provide a hint as to the expected size of the data:
     #    :size_hint => 500.kilobytes
     # See README for more details.
     #
+    # Normally upon close of a writeable proxy file, the synchronization
+    # happens synchronously and the close will wait, althrough the behavior
+    # can be controlled by Defog::Proxy.new.  To specify synchronization
+    # behavior on a per-file basis, use
+    #    :synchronize => true-or-false-or-async
+    # See File#close for more details.
+    #
     def open(mode, opts={}, &block)
-      opts = opts.keyword_args(:persist => @proxy.persist, :size_hint => :optional)
+      opts = opts.keyword_args(:persist => @proxy.persist, :synchronize => @proxy.synchronize, :size_hint => :optional)
       File.open(opts.merge(:handle => self, :mode => mode), &block)
     end
 

@@ -8,6 +8,7 @@ module Defog
 
     attr_reader :proxy_root
     attr_reader :persist
+    attr_reader :synchronize
     attr_reader :max_cache_size
     attr_reader :fog_wrapper    # :nodoc:
 
@@ -21,7 +22,9 @@ module Defog
     # <code>:local</code> and <code>:AWS</code> are supported.  When using
     # <code>:AWS</code>, an additional option <code>:bucket</code> must be
     # specified; all files proxied by this instance must be in a single
-    # bucket.
+    # bucket.  (It's OK to create multiple Defog::Proxy instances with
+    # the same access info but different buckets; they will internally
+    # share a single Fog::Storage isntance hence AWS connection.)
     #
     # By default, each proxy's root directory is placed in a reasonable
     # safe place, under <code>Rails.root/tmp</code> if Rails is defined
@@ -34,25 +37,41 @@ module Defog
     # to worry about it.  But if you do care, you can specify the option:
     #   :proxy_root => "/root/for/this/proxy/files"
     #
-    # You can turn on persistence of local proxy files by specifying
+    # You can specify that by default local proxy files will be persisted,
+    # by specifying
     #   :persist => true
     # The persistence behavior can be overriden on a per-file basis when
-    # opening a proxy (see Defog::Handle#open)
+    # opening or closing a proxy (see Defog::Handle#open, Defog::File#close)
     #
     # You can enable cache management by specifying a max cache size in
     # bytes, e.g.
     #    :max_cache_size => 3.gigabytes
     # See the README for discussion.  [Number#gigabytes is defined in
     # Rails' ActiveSupport core extensions]
+    # 
+    # Normally synchronization (i.e. upload) of changes to local proxy
+    # files happens synchronously on close; i.e. Defog::File#close waits
+    # until the upload completes.  However, you can control synchronization
+    # by specifying
+    #     :synchronize => :async        # Synchronize in a separate thread, don't wait
+    #     :synchronize => false         # Don't synchronize at all.  Defeats the purpose of Defog
+    #     :synchronize => true          # This is the default behavior
+    # The synchronization behavior can be overridden on a per-file basis
+    # when opening or closing a proxy (see Defog::Handle#open,
+    # Defog::File#close).  Note that this applies only to upload of changes to
+    # proxy files that are opened as writeable; the download of data to
+    # readable proxy files always happens synchronously.
     def initialize(opts={})
       opts = opts.keyword_args(:provider => :required,
                                :proxy_root => :optional,
                                :persist => :optional,
+                               :synchronize => {:valid => [:async, true, false], :default => true},
                                :max_cache_size => :optional,
                                :OTHERS => :optional)
 
       @proxy_root = Pathname.new(opts.delete(:proxy_root)) if opts.proxy_root
       @persist = opts.delete(:persist)
+      @synchronize = opts.delete(:synchronize)
       @max_cache_size = opts.delete(:max_cache_size)
       @reserved_proxy_paths = Set.new
 

@@ -39,6 +39,20 @@ shared_examples "a proxy" do |args|
     end
   end
 
+  context "settings" do
+    it "should set default for :persist => true" do
+      @proxy = Defog::Proxy.new(args.merge(:persist => true))
+      Defog::File.should_receive(:open).with(hash_including :persist => true)
+      @proxy.file(key, "w") do end
+    end
+    it "should set default for :synchronize => :async" do
+      @proxy = Defog::Proxy.new(args.merge(:synchronize => :async))
+      Defog::File.should_receive(:open).with(hash_including :synchronize => :async)
+      @proxy.file(key, "w") do end
+    end
+  end
+
+
   context "iteration" do
 
     before(:each) do

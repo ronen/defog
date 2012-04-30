@@ -43,9 +43,14 @@ module Defog
   class File < ::File
 
     def initialize(opts={}, &block) #:nodoc:
-      opts = opts.keyword_args(:handle => :required, :mode => :required, :persist => :optional, :size_hint => :optional)
+      opts = opts.keyword_args(:handle => :required,
+                               :mode => :required,
+                               :persist => :optional,
+                               :synchronize => { :valid => [:async, true, false], :default => true},
+                               :size_hint => :optional)
       @handle = opts.handle
       @persist = opts.persist
+      @synchronize = opts.synchronize
 
       key = @handle.key
       proxy_path = @handle.proxy_path
@@ -75,38 +80,51 @@ module Defog
       super(proxy_path, opts.mode, &block)
     end
 
-    def download_proxy
-      @handle.proxy.fog_wrapper.get_file(@handle.key, @handle.proxy_path, @encoding)
-    end
-
-    def upload_proxy
-      @handle.proxy.fog_wrapper.put_file(@handle.key, @handle.proxy_path, @encoding) 
-    end
-
-
     # Closes the proxy file and synchronizes the cloud storage (if it was
     # opened as writeable) then deletes the proxy file.
     #
-    # Synchronization can be suppressed by passing the option
-    #    :synchronize => false
+    # Synchronization (i.e. upload of a proxy) can be controlled by passing the option
+    #    :synchronize => :async # upload asynchronously in a separate thread
+    #    :synchronize => true   # upload synchronously
+    #    :synchronize => false  # don't upload
     # Synchronization will also be implicitly suppressed if the proxy file
     # was deleted before this call, e.g., via <code>::File.unlink(file.path)</code>.
-    #
     #
     # Whether the proxy file gets deleted vs persisted after the close can
     # be set by passing the option
     #    :persist => true or false
-    # (This will override the setting of <code>:persist</code> passed to Proxy#file)
+    #
+    # The :persist and :synchronize values override the settings passed to
+    # Handle#open, which in turn overrides the settings passed to Proxy.new
     #
     def close(opts={})
-      opts = opts.keyword_args(:persist => @persist, :synchronize => true)
+      opts = opts.keyword_args(:persist => @persist,
+                               :synchronize => { :valid => [true, false, :async], :default => @synchronize })
+      @persist = opts.persist
+      @synchronize = opts.synchronize
       super()
-      proxy_path = @handle.proxy_path
-      if proxy_path.exist?
-        upload_proxy if @upload and opts.synchronize
-        proxy_path.unlink unless opts.persist
+      if @handle.proxy_path.exist?
+        if @upload and @synchronize == :async
+          Thread.new { wrap_proxy }
+        else
+          wrap_proxy
+        end
       end
-      @handle.proxy.release_proxy_path(proxy_path)
+      @handle.proxy.release_proxy_path(@handle.proxy_path)
     end
+
+    def download_proxy #:nodoc:
+      @handle.proxy.fog_wrapper.get_file(@handle.key, @handle.proxy_path, @encoding)
+    end
+
+    def upload_proxy #:nodoc:
+      @handle.proxy.fog_wrapper.put_file(@handle.key, @handle.proxy_path, @encoding) 
+    end
+
+    def wrap_proxy #:nodoc:
+      upload_proxy if @upload and @synchronize
+      @handle.proxy_path.unlink unless @persist
+    end
+
   end
 end
