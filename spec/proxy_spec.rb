@@ -246,6 +246,25 @@ describe Defog::Proxy do
     it "should use the bucket name as the location" do
       Defog::Proxy.new(args).location.should == args[:bucket]
     end
+
+    it "should share fog connection with same bucket" do
+      proxy1 = Defog::Proxy.new(args)
+      proxy2 = Defog::Proxy.new(args)
+      proxy1.fog_connection.should be_equal proxy2.fog_connection
+    end
+
+    it "should share fog connection with different bucket" do
+      proxy1 = Defog::Proxy.new(args)
+      proxy2 = Defog::Proxy.new(args.merge(:bucket => "other"))
+      proxy1.fog_connection.should be_equal proxy2.fog_connection
+    end
+
+    it "should not share fog connection with different connection args" do
+      proxy1 = Defog::Proxy.new(args)
+      proxy2 = Defog::Proxy.new(args.merge(:aws_access_key_id => "other"))
+      proxy1.fog_connection.should_not be_equal proxy2.fog_connection
+    end
+
   end
 
   it "should raise error on bad provider" do

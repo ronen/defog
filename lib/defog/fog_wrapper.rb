@@ -29,6 +29,7 @@ module Defog #:nodoc: all
     end
 
     def put_file(key, path, encoding)
+      return if path.exist? and fog_head(key) and Digest::MD5.hexdigest(path.read) == get_md5(key)
       path.open("r#{encoding}") do |file|
         fog_directory.files.create(:key => key, :body => file)
       end
@@ -37,6 +38,8 @@ module Defog #:nodoc: all
     def fog_head(key)
       fog_directory.files.head(key)
     end
+
+    private
 
     class Local < FogWrapper
       def provider ; :local ; end
@@ -70,7 +73,7 @@ module Defog #:nodoc: all
       def initialize(opts={})
         opts = opts.keyword_args(:aws_access_key_id => :required, :aws_secret_access_key => :required, :region => :optional, :bucket => :required)
         @location = opts.delete(:bucket)
-        @fog_connection = Fog::Storage.new(opts.merge(:provider => provider))
+        @fog_connection = (@@aws_connection_cache||={})[opts] ||= Fog::Storage.new(opts.merge(:provider => provider))
         @fog_connection.directories.create :key => @location unless @fog_connection.directories.map(&:key).include? @location
         @fog_directory = @fog_connection.directories.get(@location)
       end
