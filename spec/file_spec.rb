@@ -229,8 +229,8 @@ shared_examples "a proxy file" do |proxyargs|
       it_should_behave_like "read" if mode == "r" or mode == "a+"
       it_should_behave_like "write" if mode =~ %r{[wa+]}
       it_should_behave_like "read after write" if mode == "w+"
+      it_should_behave_like "create" if mode =~ %r{w}
       it_should_behave_like "append" if mode =~ %r{a}
-      it_should_behave_like "create" if mode =~ %r{wa}
       it_should_behave_like "update" if mode =~ %r{[wa+]}
       it_should_behave_like "persistence"
     end
