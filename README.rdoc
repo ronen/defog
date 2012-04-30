@@ -41,7 +41,7 @@ object, which proxies files in a specific remote location, e.g.:
                                  :bucket => "s3-bucket-name")
 
         defog = Defog::Proxy.new(:provider => :Local,
-                                 :directory => "/path/to/directory")
+                                 :local_root => "/path/to/directory")
 
 === Proxy a file
 
