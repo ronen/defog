@@ -80,7 +80,7 @@ describe Defog::Handle do
 
       it "should return a path relative to public if in public" do
         with_rails_defined do
-          @proxy = Defog::Proxy.new(:provider => :local, :local_root => (Rails.root + "public/defog").tap(&:mkpath))
+          @proxy = Defog::Proxy.new(:provider => :local, :local_root => Rails.root + "public/defog")
           @proxy.file(key).url.should == "/defog/#{key}"
         end
       end

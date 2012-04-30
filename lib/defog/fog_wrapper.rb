@@ -46,7 +46,9 @@ module Defog #:nodoc: all
 
       def initialize(opts={})
         opts = opts.keyword_args(:local_root => :required)
-        @local_root = Pathname.new(opts.local_root).realpath
+        @local_root = Pathname.new(opts.local_root)
+        @local_root.mkpath unless @local_root.exist?
+        @local_root = @local_root.realpath
         @location = @local_root.to_s.gsub(%r{/},'-')
         @fog_connection = Fog::Storage.new(:provider => provider, :local_root => @local_root)
         @fog_directory = @fog_connection.directories.get('.')
