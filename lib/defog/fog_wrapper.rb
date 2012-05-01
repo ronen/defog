@@ -40,7 +40,7 @@ module Defog #:nodoc: all
     end
 
     def fog_head(key)
-      fog_directory.files.head(@prefix.to_s + key)
+      @heads[key] ||= fog_directory.files.head(@prefix.to_s + key)
     end
 
     def each
@@ -53,14 +53,15 @@ module Defog #:nodoc: all
 
     private
 
-    def log(action, key, path)
-      @logger.info "Defog[#{provider}:#{location}] #{action} #{@prefix}#{key} #{action==:download ? "=>" : "<="} #{path}" if @logger
-    end
-
     def initialize(opts={})
       opts.replace(opts.keyword_args(:prefix => :optional, :logger => :optional, :OTHERS => :optional))
       @prefix = opts.delete(:prefix)
       @logger = opts.delete(:logger)
+      @heads = {}
+    end
+
+    def log(action, key, path)
+      @logger.info "Defog[#{provider}:#{location}] #{action.to_s.capitalize} #{@prefix}#{key} #{action==:download ? "=>" : "<="} #{path}" if @logger
     end
 
     class Local < FogWrapper
