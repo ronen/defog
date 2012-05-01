@@ -91,6 +91,10 @@ module Defog
 
     end
 
+    def to_s
+      "<#{self.class} provider=#{provider} location=#{location}>"
+    end
+
     # Returns the provider for this proxy.  I.e., <code>:local</code> or
     # <code>:AWS</code>
     def provider

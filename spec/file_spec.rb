@@ -240,6 +240,12 @@ shared_examples "a proxy file" do |proxyargs|
     expect { @proxy.file(key, "xyz") }.should raise_error(ArgumentError)
   end
 
+  it "should have a nice to_s" do
+    @proxy.file(key, "w") {|f|
+      f.to_s.should include f.path
+    }
+  end
+
 
 end
 

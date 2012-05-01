@@ -35,6 +35,10 @@ module Defog
       @proxy_path = Pathname.new("#{@proxy.proxy_root}/#{@key}").expand_path
     end
 
+    def to_s
+      "<#{self.class}: key=#{key}>"
+    end
+
     # Returns true if the remote cloud file exists 
     def exist?
       !!fog_model

@@ -7,6 +7,11 @@ shared_examples "a proxy" do |args|
       @proxy = Defog::Proxy.new(args)
     end
 
+    it "should have a nice to_s" do
+      @proxy.to_s.should include @proxy.provider.to_s
+      @proxy.to_s.should include @proxy.location
+    end
+
     it "file should return a handle" do
       handle = @proxy.file(key)
       handle.proxy.should == @proxy

@@ -51,13 +51,14 @@ module Defog
       @handle = opts.handle
       @persist = opts.persist
       @synchronize = opts.synchronize
+      @mode = opts.mode
 
       key = @handle.key
       proxy_path = @handle.proxy_path
       proxy_path.dirname.mkpath
       re_encoding = /(b|:.*)$/
-      @encoding = opts.mode.match(re_encoding).to_s
-      case opts.mode.sub(re_encoding,'')
+      @encoding = @mode.match(re_encoding).to_s
+      case @mode.sub(re_encoding,'')
       when "r"
         download = true
         @upload = false
@@ -71,13 +72,17 @@ module Defog
         @upload = true
         cache_size = [opts.size_hint, @handle.size].compact.max
       else
-        raise ArgumentError, "Invalid mode #{opts.mode.inspect}"
+        raise ArgumentError, "Invalid mode #{@mode.inspect}"
       end
 
       @handle.proxy.manage_cache(cache_size, proxy_path)
       @handle.proxy.reserve_proxy_path(proxy_path)
       download_proxy if download
-      super(proxy_path, opts.mode, &block)
+      super(proxy_path, @mode, &block)
+    end
+
+    def to_s
+      "<#{self.class}: proxy=#{@handle.proxy_path} mode=#{@mode}>"
     end
 
     # Closes the proxy file and synchronizes the cloud storage (if it was
