@@ -9,6 +9,7 @@ module Defog #:nodoc: all
     attr_reader :location
     attr_reader :fog_connection
     attr_reader :fog_directory
+    attr_accessor :logger
 
     def self.connect(opts={})
       opts = opts.keyword_args(:provider => :required, :OTHERS => :optional)
@@ -24,6 +25,7 @@ module Defog #:nodoc: all
     def get_file(key, path, encoding)
       raise Error::NoCloudFile, "No such file in #{provider} #{location}: #{key}" unless fog_head(key)
       return if path.exist? and Digest::MD5.hexdigest(path.read) == get_md5(key)
+      log :download, key, path
       path.open("w#{encoding}") do |f|
         f.write(fog_head(key).body)
       end
@@ -31,6 +33,7 @@ module Defog #:nodoc: all
 
     def put_file(key, path, encoding)
       return if path.exist? and fog_head(key) and Digest::MD5.hexdigest(path.read) == get_md5(key)
+      log :upload, key, path
       path.open("r#{encoding}") do |file|
         fog_directory.files.create(:key => @prefix.to_s + key, :body => file)
       end
@@ -50,18 +53,22 @@ module Defog #:nodoc: all
 
     private
 
-    def initialize(opts={})
-      opts = opts.keyword_args(:prefix => :optional)
-      @prefix = opts.prefix
+    def log(action, key, path)
+      @logger.info "Defog[#{provider}:#{location}] #{action} #{@prefix}#{key} #{action==:download ? "=>" : "<="} #{path}" if @logger
     end
 
+    def initialize(opts={})
+      opts.replace(opts.keyword_args(:prefix => :optional, :logger => :optional, :OTHERS => :optional))
+      @prefix = opts.delete(:prefix)
+      @logger = opts.delete(:logger)
+    end
 
     class Local < FogWrapper
       def provider ; :local ; end
 
       def initialize(opts={})
-        opts = opts.keyword_args(:local_root => :required, :prefix => :optional)
-        super(:prefix => opts.delete(:prefix))
+        super(opts)
+        opts = opts.keyword_args(:local_root => :required)
         @local_root = Pathname.new(opts.local_root)
         @local_root.mkpath unless @local_root.exist?
         @local_root = @local_root.realpath
@@ -89,8 +96,8 @@ module Defog #:nodoc: all
       def provider ; :AWS ; end
 
       def initialize(opts={})
-        opts = opts.keyword_args(:aws_access_key_id => :required, :aws_secret_access_key => :required, :region => :optional, :bucket => :required, :prefix => :optional)
-        super(:prefix => opts.delete(:prefix))
+        super(opts)
+        opts = opts.keyword_args(:aws_access_key_id => :required, :aws_secret_access_key => :required, :region => :optional, :bucket => :required)
         @location = opts.delete(:bucket)
         @fog_connection = (@@aws_connection_cache||={})[opts] ||= Fog::Storage.new(opts.merge(:provider => provider))
         @fog_connection.directories.create :key => @location unless @fog_connection.directories.map(&:key).include? @location

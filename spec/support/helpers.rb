@@ -39,4 +39,13 @@ module Helpers
     end
   end
 
+  def should_log(arg)
+    @proxy.logger.should_receive(:info).with(arg)
+  end
+
+  def should_not_log(arg)
+    @proxy.logger.should_not_receive(:info).with(arg)
+  end
+
+
 end

@@ -10,6 +10,7 @@ module Defog
     attr_reader :persist
     attr_reader :synchronize
     attr_reader :max_cache_size
+
     attr_reader :fog_wrapper    # :nodoc:
 
     # Opens a <code>Fog</code> cloud storage connection to map to a corresponding proxy
@@ -68,6 +69,11 @@ module Defog
     # Defog::File#close).  Note that this applies only to upload of changes to
     # proxy files that are opened as writeable; the download of data to
     # readable proxy files always happens synchronously.
+    #
+    # If you specify
+    #      :logger => an-instance-of-Logger
+    # (or provide a logger via #logger=), Defog will log downloads and
+    # upload using Logger#info.
     def initialize(opts={})
       opts = opts.keyword_args(:provider => :required,
                                :proxy_root => :optional,
@@ -122,6 +128,14 @@ module Defog
     # Returns the prefix that was passed
     def prefix
       @fog_wrapper.prefix
+    end
+
+    def logger
+      @fog_wrapper.logger
+    end
+
+    def logger=(log)
+      @fog_wrapper.logger= log
     end
 
     # Proxy a remote cloud file.  Returns or yields a Defog::Handle object that
