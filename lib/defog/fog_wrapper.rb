@@ -94,7 +94,7 @@ module Defog #:nodoc: all
         @location = opts.delete(:bucket)
         @fog_connection = (@@aws_connection_cache||={})[opts] ||= Fog::Storage.new(opts.merge(:provider => provider))
         @fog_connection.directories.create :key => @location unless @fog_connection.directories.map(&:key).include? @location
-        @fog_directory = @fog_connection.directories.get(@location)
+        @fog_directory = @fog_connection.directories.get(@location, :prefix => @prefix)
       end
 
       def get_md5(key)
