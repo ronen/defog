@@ -27,7 +27,7 @@ shared_examples "a handle" do |proxyargs|
     :last_modified => :last_modified,
     :delete => :destroy }.each do |method, fog_method|
 
-    it "should delegate #{method.inspect} to the fog model #{fog_method.inspect}if the remote file exists" do
+    it "should delegate #{method.inspect} to the fog model #{fog_method.inspect} if the remote file exists" do
       create_remote("delegate me")
       @handle.fog_model.class.any_instance.should_receive(fog_method).and_return { "dummy" }
       @handle.send(method).should == "dummy"
@@ -59,6 +59,15 @@ shared_examples "a handle" do |proxyargs|
   it "should return a Fog model" do
     create_remote("foggy")
     @handle.fog_model.body.should == "foggy"
+  end
+
+  it "should update when file changes" do
+    create_remote("abc")
+    @proxy.file(key).size.should == 3
+    @proxy.file(key).open("w") do |f|
+      f.write("defghij")
+    end
+    @proxy.file(key).size.should == 7
   end
 
 

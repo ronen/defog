@@ -37,10 +37,17 @@ module Defog #:nodoc: all
       path.open("r#{encoding}") do |file|
         fog_directory.files.create(:key => @prefix.to_s + key, :body => file)
       end
+      @heads.delete(key)
     end
 
     def fog_head(key)
       @heads[key] ||= fog_directory.files.head(@prefix.to_s + key)
+    end
+
+    def fog_delete(key)
+      fog_head(key).destroy.tap { 
+        @heads.delete(key)
+      }
     end
 
     def each

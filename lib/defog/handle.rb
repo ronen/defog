@@ -46,7 +46,7 @@ module Defog
 
     # Deletes the remote cloud file if it exists
     def delete
-      fog_model.andand.destroy
+      fog_model and @proxy.fog_wrapper.fog_delete(@key)
     end
 
     # Returns the size of the remote cloud file, or nil if it doesn't exist
