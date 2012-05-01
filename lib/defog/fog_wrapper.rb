@@ -98,7 +98,7 @@ module Defog #:nodoc: all
       end
 
       def get_md5(key)
-        fog_head(key).content_md5
+        fog_head(key).etag
       end
 
       def url(key, expiry)

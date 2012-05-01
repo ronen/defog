@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 shared_examples "get proxy" do
+
   it "should create proxy if remote exists" do
     create_remote("hello")
     file = @proxy.file(key, @mode)
@@ -23,14 +24,9 @@ shared_examples "get proxy" do
   it "should use existing proxy if it's valid" do
     create_remote("hello")
     create_proxy("hello")
-    Pathname.any_instance.should_not_receive(:open).with(/^w/)
-    @proxy.file(key, @mode)
-
-    # doublecheck that should_not_receive was the right
-    # thing to test.  will it be received for an invalid proxy?
-    create_proxy("goodbye")
-    Pathname.any_instance.should_receive(:open).with(/^w/)
-    @proxy.file(key, @mode)
+    handle = @proxy.file(key)
+    handle.proxy_path.should_not_receive(:open).with(/^w/)
+    handle.open(@mode)
   end
 end
 
