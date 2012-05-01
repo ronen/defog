@@ -4,7 +4,7 @@ shared_examples "get proxy" do
 
   it "should create proxy if remote exists" do
     create_remote("hello")
-    should_log /download/
+    should_log /Download/
     file = @proxy.file(key, @mode)
     File.exist?(file.path).should be_true
     file.close
@@ -18,7 +18,7 @@ shared_examples "get proxy" do
     create_remote("hello")
     create_proxy("goodbye")
     proxy_path.read.should == "goodbye"
-    should_log /download/
+    should_log /Download/
     @proxy.file(key, @mode)
     proxy_path.read.should == "hello"
   end
@@ -28,7 +28,7 @@ shared_examples "get proxy" do
     create_proxy("hello")
     handle = @proxy.file(key)
     handle.proxy_path.should_not_receive(:open).with(/^w/)
-    should_not_log /download/
+    should_not_log /Download/
     handle.open(@mode)
   end
 end
@@ -84,7 +84,7 @@ shared_examples "append" do
     create_remote("hello")
     @proxy.file(key, @mode, :persist => true) do |file|
       file.write "goodbye"
-      should_log /upload/
+      should_log /Upload/
     end
     proxy_path.read.should == "hellogoodbye"
   end
@@ -93,7 +93,7 @@ end
 shared_examples "create" do
 
   it "should create remote" do
-    should_log /upload/
+    should_log /Upload/
     file = @proxy.file(key, @mode)
     create_proxy("upload me")
     file.close
@@ -101,7 +101,7 @@ shared_examples "create" do
   end
 
   it "should not create remote if proxy is deleted" do
-    should_not_log /upload/
+    should_not_log /Upload/
     @proxy.file(key, @mode) do |file|
       file.write("ignore me")
       proxy_path.unlink
@@ -110,7 +110,7 @@ shared_examples "create" do
   end
 
   it "should not create remote if :synchronize => false" do
-    should_not_log /upload/
+    should_not_log /Upload/
     file = @proxy.file(key, @mode)
     create_proxy("ignore me")
     file.close(:synchronize => false)
@@ -118,7 +118,7 @@ shared_examples "create" do
   end
 
   it "should create remote asynchronously if :synchronize => async" do
-    should_log /upload/
+    should_log /Upload/
     file = @proxy.file(key, @mode)
     create_proxy("upload me in thread")
     Thread.should_receive(:new) { |&block|
@@ -138,7 +138,7 @@ shared_examples "update" do
     remote_body.should == "overwrite me"
     file = @proxy.file(key, @mode)
     create_proxy("upload me")
-    should_log /upload/
+    should_log /Upload/
     file.close
     remote_body.should == "upload me"
   end
@@ -151,13 +151,13 @@ shared_examples "update" do
       remote_body.should == "overwrite me"
       block.call
     }
-    should_log /upload/
+    should_log /Upload/
     file.close(:synchronize => :async)
     remote_body.should == "upload me"
   end
 
   it "should not overwrite remote if proxy is deleted" do
-    should_not_log /upload/
+    should_not_log /Upload/
     create_remote("keep me")
     @proxy.file(key, @mode) do |file|
       file.write("ignore me")
@@ -167,7 +167,7 @@ shared_examples "update" do
   end
 
   it "should not overwrite remote if :synchronize => false" do
-    should_not_log /upload/
+    should_not_log /Upload/
     create_remote("keep me")
     file = @proxy.file(key, @mode)
     create_proxy("ignore me")
