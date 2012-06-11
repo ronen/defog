@@ -1,5 +1,8 @@
 = defog
 
+{<img src="https://secure.travis-ci.org/ronen/defog.png"/>}[http://travis-ci.org/ronen/defog]
+{<img src="https://gemnasium.com/ronen/defog.png" alt="Dependency Status" />}[https://gemnasium.com/ronen/defog]
+
 Defog wraps the fog[https://rubygems.org/gems/fog] gem (specifically,
 {Fog::Storage}[http://fog.io/1.3.1/storage/]), providing access to files
 stored in the cloud via proxy files on the local file system.
@@ -18,12 +21,6 @@ production.
 Defog also provides a few simple remote-file management methods to minimize
 the need to dig down into the Fog layer; but full access to the underlying
 fog objects is available should it be needed.
-
-<b>NOTE:</b>  Currently the only supported providers are :local and :AWS since
-those are what the author currently uses.  Please fork and add others!
-(There's just a very small amount of provider-specific code in {one
-file}[https://github.com/ronen/defog/blob/master/lib/defog/fog_wrapper.rb],
-plus spec examples.)
 
 == Usage Summary
 
@@ -216,8 +213,15 @@ Gemfile:
 
 == Compatibility
 
-Defog has (so far) been tested on MRI 1.9.3 using
-fog[https://rubygems.org/gems/fog] storage providers :local and :AWS
+Defog is currently known to work on:
+
+* Ruby:  MRI 1.9.2, MRI 1.9.3
+* Fog Storage: :local, :AWS
+
+The above storage providers are what the author uses.  Please fork and add
+others!  (There's just a very small amount of provider-specific code in {one
+ file}[https://github.com/ronen/defog/blob/master/lib/defog/fog_wrapper.rb],
+ plus spec examples.)
 
 == Copyright
 
