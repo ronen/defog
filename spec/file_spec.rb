@@ -51,9 +51,9 @@ shared_examples "read" do
 
   it "should pass encodings through" do
     create_remote("encode me")
-    @proxy.file(key, "#{@mode}:EUC-JP:UTF-16") do |file|
+    @proxy.file(key, "#{@mode}:EUC-JP:UTF-8") do |file|
       file.external_encoding.name.should == "EUC-JP"
-      file.internal_encoding.name.should == "UTF-16"
+      file.internal_encoding.name.should == "UTF-8"
     end
   end
 
