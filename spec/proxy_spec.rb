@@ -218,8 +218,8 @@ shared_examples "a proxy" do |args|
           proxy_path.should_not be_exist
           other_proxy_path("a").should be_exist
           other_proxy_path("b").should be_exist
-          other_proxy_path("r").should be_exist
-          other_proxy_path("s").should be_exist
+          other_proxy_path("R").should be_exist
+          other_proxy_path("S").should be_exist
         end
       end
     end
