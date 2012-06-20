@@ -223,6 +223,14 @@ others!  (There's just a very small amount of provider-specific code in {one
  file}[https://github.com/ronen/defog/blob/master/lib/defog/fog_wrapper.rb],
  plus spec examples.)
 
+== History
+
+Release Notes:
+
+* 0.7.0 - Add :query option to Handle#url
+* 0.6.1 - Bug fix (caching)
+* 0.6.0 - Add logging
+
 == Copyright
 
 Released under the MIT License.  See LICENSE for details.
