@@ -89,7 +89,7 @@ module Defog #:nodoc: all
         Digest::MD5.hexdigest(fog_head(key).body)
       end
 
-      def url(key, expiry)
+      def url(key, options={})
         localpath = Pathname.new("#{@local_root}/#{@prefix}#{key}").expand_path
         if defined?(Rails)
           relative = localpath.relative_path_from Rails.root + "public" rescue nil
@@ -116,8 +116,10 @@ module Defog #:nodoc: all
         fog_head(key).etag
       end
 
-      def url(key, expiry)
-        fog_head(key).url(expiry)
+      def url(key, options={})
+        options = options.keyword_args(:expiry => :required, :query => :optional)
+        expiry = options.delete(:expiry)
+        fog_head(key).url(expiry, options)
       end
 
     end

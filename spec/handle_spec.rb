@@ -116,6 +116,18 @@ describe Defog::Handle do
     args = {:provider => :AWS, :aws_access_key_id => "dummyid", :aws_secret_access_key => "dummysecret", :region => "eu-west-1", :bucket => "tester"}
     it_should_behave_like "a handle", args
 
+    it "should pass url query options to fog" do
+      @proxy = Defog::Proxy.new(args)
+
+      create_remote("reach out to me")
+      t = Time.now + 10*60
+      #Fog::Storage::AWS::File.any_instance.should_receive(:url).with(t, "response-content-disposition" => "attachment")
+      url = @proxy.file(key).url(:expiry => t, :query => {"response-content-disposition" => "attachment"})
+      puts url
+      url.should include "response-content-disposition=attachment"
+    end
+
+
   end
 
 end

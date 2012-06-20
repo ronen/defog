@@ -60,19 +60,25 @@ module Defog
       fog_model.andand.last_modified
     end
 
-    # Returns a URL to access the remote cloud file.
+    # Returns a URL to access the remote cloud file.  The options are
+    # storage-specific.
     #
-    # The option
+    # For :AWS files, the option
     #    :expiry => time
-    # Specifies the expiration of time-limited URLS when using :AWS.  The default is
-    # <code>Time.now + 10.minutes</code>.  The expiry is ignored when using :local
+    # is required and specifies the expiration of time-limited URLS when
+    # using :AWS.  The default is <code>Time.now + 10.minutes</code>.
+    # The option
+    #    :query => { ... }
+    # is optional and is passed directly to fog.  Example usage might be
+    #    :query => {'response-content-disposition' => 'attachment'}
     #
-    # For :local cloud files, if Rails is defined and the file is in the
-    # Rails app's public directory, returns a site path relative to
-    # the public directory.  Otherwise returns a <code>"file://"</code> URL 
+    # For :local cloud files, all options are ignored.  If Rails is defined
+    # and the file is in Rails app's public directory, returns a path
+    # relative to the public directory.  Otherwise returns a
+    # <code>"file://"</code> URL 
     def url(opts={})
-      opts = opts.keyword_args(:expiry => Time.now + 10*60)
-      @proxy.fog_wrapper.url(@key, opts.expiry)
+      opts = opts.keyword_args(:expiry => Time.now + 10*60, :query => :optional)
+      @proxy.fog_wrapper.url(@key, opts)
     end
 
     # Returns the underlying Fog::Model, should you need it for something.
