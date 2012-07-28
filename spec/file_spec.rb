@@ -11,7 +11,7 @@ shared_examples "get proxy" do
   end
 
   it "should raise error if remote doesn't exist" do
-    expect { @proxy.file("nonesuch", @mode) }.should raise_error(Defog::Error::NoCloudFile)
+    expect { @proxy.file("nonesuch", @mode) }.to raise_error(Defog::Error::NoCloudFile)
   end
 
   it "should overwrite existing proxy if it's not valid " do
@@ -106,7 +106,7 @@ shared_examples "create" do
       file.write("ignore me")
       proxy_path.unlink
     end
-    expect {remote_body}.should raise_error
+    expect {remote_body}.to raise_error
   end
 
   it "should not create remote if :synchronize => false" do
@@ -114,7 +114,7 @@ shared_examples "create" do
     file = @proxy.file(key, @mode)
     create_proxy("ignore me")
     file.close(:synchronize => false)
-    expect {remote_body}.should raise_error
+    expect {remote_body}.to raise_error
   end
 
   it "should create remote asynchronously if :synchronize => async" do
@@ -122,7 +122,7 @@ shared_examples "create" do
     file = @proxy.file(key, @mode)
     create_proxy("upload me in thread")
     Thread.should_receive(:new) { |&block|
-      expect {remote_body}.should raise_error
+      expect {remote_body}.to raise_error
       block.call
     }
     file.close(:synchronize => :async)
@@ -250,7 +250,7 @@ shared_examples "a proxy file" do |proxyargs|
   end
 
   it "should raise error on bad mode" do
-    expect { @proxy.file(key, "xyz") }.should raise_error(ArgumentError)
+    expect { @proxy.file(key, "xyz") }.to raise_error(ArgumentError)
   end
 
   it "should have a nice to_s" do
