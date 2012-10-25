@@ -219,9 +219,9 @@ Defog is currently known to work on:
 * Fog Storage: :local, :AWS
 
 The above storage providers are what the author uses.  Please fork and add
-others!  (There's just a very small amount of provider-specific code in {one
- file}[https://github.com/ronen/defog/blob/master/lib/defog/fog_wrapper.rb],
- plus spec examples.)
+others!  (There's just a very small amount of provider-specific code in
+one file, https://github.com/ronen/defog/blob/master/lib/defog/fog_wrapper.rb,
+plus appropriate rspec examples.)
 
 == History
 
