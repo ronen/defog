@@ -31,6 +31,14 @@ shared_examples "get proxy" do
     should_not_log /Download/
     handle.open(@mode)
   end
+
+  it "should include key info in exception messages" do
+    create_remote("error me")
+    File.any_instance.should_receive(:write) { raise Encoding::UndefinedConversionError, "dummy" }
+    expect {
+      @proxy.file(key, "r")
+    }.to raise_error Encoding::UndefinedConversionError, /#{key}/
+  end
 end
 
 shared_examples "read" do

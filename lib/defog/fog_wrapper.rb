@@ -29,6 +29,8 @@ module Defog #:nodoc: all
       path.open("w#{encoding}") do |f|
         f.write(fog_head(key).body)
       end
+    rescue
+      raise $!, "#{provider} #{location}: #{key}: #{$!}"
     end
 
     def put_file(key, path, encoding)
