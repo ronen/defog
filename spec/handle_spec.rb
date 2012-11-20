@@ -123,7 +123,6 @@ describe Defog::Handle do
       t = Time.now + 10*60
       #Fog::Storage::AWS::File.any_instance.should_receive(:url).with(t, "response-content-disposition" => "attachment")
       url = @proxy.file(key).url(:expiry => t, :query => {"response-content-disposition" => "attachment"})
-      puts url
       url.should include "response-content-disposition=attachment"
     end
 
