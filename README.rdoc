@@ -227,6 +227,7 @@ plus appropriate rspec examples.)
 
 Release Notes:
 
+* 0.7.1 - Add key info to message if there's an exception when getting file
 * 0.7.0 - Add :query option to Handle#url
 * 0.6.1 - Bug fix (caching)
 * 0.6.0 - Add logging
