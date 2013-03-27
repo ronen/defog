@@ -1,8 +1,7 @@
 # defog
 
 [<img
-src="https://secure.travis-ci.org/ronen/defog.png"/>](http://travis-ci.org/ron
-en/defog) [<img src="https://gemnasium.com/ronen/defog.png" alt="Dependency
+src="https://secure.travis-ci.org/ronen/defog.png"/>](http://travis-ci.org/ronen/defog) [<img src="https://gemnasium.com/ronen/defog.png" alt="Dependency
 Status" />](https://gemnasium.com/ronen/defog)
 
 Defog wraps the [fog](https://rubygems.org/gems/fog) gem (specifically,
