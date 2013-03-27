@@ -222,7 +222,15 @@ module Defog
       end
 
       # free the remaining candidates
-      candidates.each(&:unlink)
+      candidates.each do |candidate|
+        begin
+          candidate.unlink
+        rescue Errno::ENOENT
+          # some other process has deleted the while we were looking at it.
+          # nothing to do.
+        end
+      end
+
     end
 
   end
