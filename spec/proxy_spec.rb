@@ -35,7 +35,7 @@ shared_examples "a proxy" do |args|
     end
 
     it "should return fog storage" do
-      @proxy.fog_connection.should == @proxy.fog_directory.connection
+      @proxy.fog_connection.should == @proxy.fog_directory.service
     end
 
     it "should return fog directory" do
