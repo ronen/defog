@@ -237,6 +237,7 @@ plus appropriate rspec examples.)
 
 Release Notes:
 
+*   0.7.2 - Bug fix: don't fail when clearing cache if another process clears it first
 *   0.7.1 - Add key info to message if there's an exception when getting file
 *   0.7.0 - Add :query option to Handle#url
 *   0.6.1 - Bug fix (caching)
