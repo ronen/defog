@@ -217,6 +217,7 @@ You can access the underlying fog objects as needed:
 ## Installation
 
 Gemfile:
+
     gem 'defog'
 
 ## Compatibility
