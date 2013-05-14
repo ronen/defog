@@ -204,6 +204,20 @@ And it's fair game to delete proxy files outside of Defog, such as via a cron
 job.  Of course in these cases it's up to you to make sure not to
 unintentionally delete a proxy file that's currently open.
 
+### Multiple Defog proxies, prefix, and cache sharing.
+
+Sometimes you may want to have multiple Defog proxies, each scoped to a
+different "subdirectory" of a cloud storage location -- but all of them sharing a single cache in order to limit the max cache size across them all).
+
+That works OK out of the box (as of v0.8.0):  the default `proxy_root` is created without regard for the `prefix` -- but the `proxy_path` for files within the cache does include the prefix.  So it's safe to create multiple defog proxies that differ only in `prefix`, and they will share the cache without colliding with each other.   
+
+Notes:
+
+* Each defog proxy will manage the entire cache based on its own `max_cache_size` setting.  So presumably you would pass the same `max_cache_size` to each.
+
+* Best to avoid multithreading though, as there's no locking around the cache management. So in principle one thread could delete a proxy that another thread is using.
+
+
 ## Accessing Fog
 
 You can access the underlying fog objects as needed:
@@ -237,11 +251,12 @@ plus appropriate rspec examples.)
 
 Release Notes:
 
-*   0.7.2 - Bug fix: don't fail when clearing cache if another process clears it first
-*   0.7.1 - Add key info to message if there's an exception when getting file
-*   0.7.0 - Add :query option to Handle#url
-*   0.6.1 - Bug fix (caching)
-*   0.6.0 - Add logging
+* 0.8.0 - Include prefix in proxy_path (thus allowing cache sharing)
+* 0.7.2 - Bug fix: don't fail when clearing cache if another process clears it first
+* 0.7.1 - Add key info to message if there's an exception when getting file
+* 0.7.0 - Add :query option to Handle#url
+* 0.6.1 - Bug fix (caching)
+* 0.6.0 - Add logging
 
 
 ## Copyright
