@@ -14,6 +14,21 @@ shared_examples "a handle" do |proxyargs|
     @handle.to_s.should include key
   end
 
+  context "proxy path" do
+    it "should start with proxy root" do
+      @handle.proxy_path.to_s.should start_with(@proxy.proxy_root.to_s)
+    end
+
+    it "should end with key" do
+      @handle.proxy_path.to_s.should end_with(key)
+    end
+
+    it "should include prefix" do
+      prefix = "IAmAPrefix"
+      Defog::Proxy.new(proxyargs.merge(:prefix => prefix)).file(key).proxy_path.to_s.should include(prefix.to_s)
+    end
+  end
+
   it "should report exist? true if remote cloud file exists" do
     create_remote("i exist")
     @handle.should be_exist

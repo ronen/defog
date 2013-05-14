@@ -32,7 +32,7 @@ module Defog
     def initialize(proxy, key) #:nodoc:
       @proxy = proxy
       @key = key
-      @proxy_path = Pathname.new("#{@proxy.proxy_root}/#{@key}").expand_path
+      @proxy_path = Pathname.new("#{@proxy.proxy_root}/#{@proxy.prefix}#{@key}").expand_path
     end
 
     def to_s
