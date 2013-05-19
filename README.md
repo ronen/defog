@@ -1,8 +1,8 @@
 # defog
 
-[<img
-src="https://secure.travis-ci.org/ronen/defog.png"/>](http://travis-ci.org/ronen/defog) [<img src="https://gemnasium.com/ronen/defog.png" alt="Dependency
-Status" />](https://gemnasium.com/ronen/defog)
+[![Gem Version](https://badge.fury.io/rb/defog.png)](http://badge.fury.io/rb/defog)
+[![Build Status](https://secure.travis-ci.org/ronen/defog.png)](http://travis-ci.org/ronen/defog) 
+[![Dependency Status](https://gemnasium.com/ronen/defog.png)](https://gemnasium.com/ronen/defog)
 
 Defog wraps the [fog](https://rubygems.org/gems/fog) gem (specifically,
 [Fog::Storage](http://fog.io/1.3.1/storage/)), providing access to files
