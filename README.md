@@ -254,6 +254,7 @@ plus appropriate rspec examples.)
 
 Release Notes:
 
+* 0.9.0 - Expose Handle#md5_hash
 * 0.8.0 - Include prefix in proxy_path (thus allowing cache sharing)
 * 0.7.2 - Bug fix: don't fail when clearing cache if another process clears it first
 * 0.7.1 - Add key info to message if there's an exception when getting file
