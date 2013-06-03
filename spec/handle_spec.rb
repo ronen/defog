@@ -29,13 +29,29 @@ shared_examples "a handle" do |proxyargs|
     end
   end
 
-  it "should report exist? true if remote cloud file exists" do
-    create_remote("i exist")
-    @handle.should be_exist
+  context "if remote cloud file exists" do
+
+    before(:each) do
+      create_remote("i exist")
+    end
+
+    it "should report exist? true" do
+      @handle.should be_exist
+    end
+
+    it "should return md5 hash" do
+      @handle.md5_hash.should == Digest::MD5.hexdigest("i exist")
+    end
   end
 
-  it "should report exist? false if remote cloud file does not exist" do
-    @handle.should_not be_exist
+  context "if remote cloud file does not exist" do
+    it "should report exist? false" do
+      @handle.should_not be_exist
+    end
+
+    it "should return nil md5 hash" do
+      @handle.md5_hash.should be_nil
+    end
   end
 
   { :size => :content_length,

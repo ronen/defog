@@ -99,6 +99,7 @@ supports cloud file query and manipulation:
     handle.delete        # deletes the cloud file
     handle.size          # => size of the cloud file
     handle.last_modified # => modification date of the cloud file
+    handle.md5_hash      # => MD5 hash digest of the cloud file
 
 In fact, `defog.file("key", mode, options, &block)` is really just shorthand
 for

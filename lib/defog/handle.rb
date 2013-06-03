@@ -60,6 +60,13 @@ module Defog
       fog_model.andand.last_modified
     end
 
+    # Returns the MD5 hash digest of the remote cloud file, or nil if it
+    # doesn't exist
+    #
+    def md5_hash
+      return @proxy.fog_wrapper.get_md5(@key) if exist?
+    end
+
     # Returns a URL to access the remote cloud file.  The options are
     # storage-specific.
     #
