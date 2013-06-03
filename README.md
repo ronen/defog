@@ -238,7 +238,7 @@ Gemfile:
 
 Defog is currently known to work on:
 
-*   Ruby:  MRI 1.9.2, MRI 1.9.3
+*   Ruby:  MRI 1.9.2, MRI 1.9.3, MRI 2.0.0
 *   Fog Storage: :local, :AWS
 
 
