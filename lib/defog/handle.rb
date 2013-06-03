@@ -14,19 +14,19 @@ module Defog
   #    end
   #
   # The #proxy_path attribute method returns a <code>Pathname</code>
-  # giving the local proxy file location.  Querying the attribute does 
+  # giving the local proxy file location.  Querying the attribute does
   # <i>not</i> upload, download, synchronize, or otherwise interact with
   # the cloud or local proxy file in any way -- it just returns a constructed
   # Pathname.  The <code>proxy_path</code> is a deterministic function of the
   # cloud key and Defog::Proxy#proxy_root, so you can rely on it not
   # changing between independent accesses to a cloud file.
-  #  
+  #
   class Handle
 
     attr_reader :key
     attr_reader :proxy #:nodoc:
 
-    # Pathname where proxy file is, was, or will be located.  
+    # Pathname where proxy file is, was, or will be located.
     attr_reader :proxy_path
 
     def initialize(proxy, key) #:nodoc:
@@ -39,7 +39,7 @@ module Defog
       "<#{self.class}: key=#{key}>"
     end
 
-    # Returns true if the remote cloud file exists 
+    # Returns true if the remote cloud file exists
     def exist?
       !!fog_model
     end
@@ -53,7 +53,7 @@ module Defog
     def size
       fog_model.andand.content_length
     end
-    
+
     # Returns the modification date of the remote cloud file, or nil if it
     # doesn't exist
     def last_modified
@@ -82,7 +82,7 @@ module Defog
     # For :local cloud files, all options are ignored.  If Rails is defined
     # and the file is in Rails app's public directory, returns a path
     # relative to the public directory.  Otherwise returns a
-    # <code>"file://"</code> URL 
+    # <code>"file://"</code> URL
     def url(opts={})
       opts = opts.keyword_args(:expiry => Time.now + 10*60, :query => :optional)
       @proxy.fog_wrapper.url(@key, opts)
@@ -98,7 +98,7 @@ module Defog
       @proxy.fog_wrapper.fog_head(@key)
     end
 
-    # Returns a Defog::File object, which is a specialization of ::File. 
+    # Returns a Defog::File object, which is a specialization of ::File.
     #
     # <code>mode</code> can be the usual "r", "r+", "w", "w+", "a", or "a+" with the
     # usual semantics.  When opened in a readable mode ("r", "r+", "w+",

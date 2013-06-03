@@ -5,7 +5,7 @@
 [![Dependency Status](https://gemnasium.com/ronen/defog.png)](https://gemnasium.com/ronen/defog)
 
 Defog wraps the [fog](https://rubygems.org/gems/fog) gem (specifically,
-[Fog::Storage](http://fog.io/1.3.1/storage/)), providing access to files
+[Fog::Storage](http://fog.io/storage/)), providing access to files
 stored in the cloud via proxy files on the local file system. A proxy file can
 be
 *   Read-only:  A local cached copy of a cloud file.
@@ -24,9 +24,11 @@ Defog also provides a few simple remote-file management methods to minimize
 the need to dig down into the Fog layer; but full access to the underlying fog
 objects is available should it be needed.
 
+Full Rdoc is available at [http://rubydoc.info/gems/defog](Full Rdoc is available at http://rubydoc.info/gems/defog)
+
 ## Usage Summary
 
-Full Rdoc is available at http://rubydoc.info/gems/defog
+
 
 ### Create proxy connection
 
@@ -42,7 +44,7 @@ proxies files in a specific remote location, e.g.:
     defog = Defog::Proxy.new(:provider => :Local,
                              :local_root => "/path/to/directory")
 
-For complete options, see Defog::Proxy.new RDOC
+For complete options, see [Defog::Proxy.new RDOC](http://rubydoc.info/gems/defog/Defog/Proxy)
 
 ### Proxy a file
 
@@ -244,8 +246,8 @@ Defog is currently known to work on:
 
 
 The above storage providers are what the author uses.  Please fork and add
-others!  (There's just a very small amount of provider-specific code in one
-file, https://github.com/ronen/defog/blob/master/lib/defog/fog_wrapper.rb,
+others!  (There's just a very small amount of provider-specific code in [one
+file](https://github.com/ronen/defog/blob/master/lib/defog/fog_wrapper.rb]),
 plus appropriate rspec examples.)
 
 ## History
