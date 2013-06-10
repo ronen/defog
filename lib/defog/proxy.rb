@@ -193,7 +193,15 @@ module Defog
 
       # find available space (not counting current proxy)
       available = max_cache_size
-      proxy_root.find { |path| available -= path.size if path.file? and path != proxy_path}
+      proxy_root.find { |path|
+        available -= begin
+                       path.size
+                     rescue Errno::ENOENT
+                       # some other process has snuck in and deleted the
+                       # file since the path.file? check.  has happened...
+                       0
+                     end if path.file? and path != proxy_path
+      }
       return if available >= want_size
 
       space_needed = want_size - available
@@ -226,7 +234,7 @@ module Defog
         begin
           candidate.unlink
         rescue Errno::ENOENT
-          # some other process has deleted the while we were looking at it.
+          # some other process has deleted the file while we were looking at it.
           # nothing to do.
         end
       end
