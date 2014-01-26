@@ -267,3 +267,7 @@ Release Notes:
 ## Copyright
 
 Released under the MIT License.  See LICENSE for details.
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/ronen/defog/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
