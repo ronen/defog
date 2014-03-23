@@ -253,7 +253,7 @@ plus appropriate rspec examples.)
 ## History
 
 Release Notes:
-
+* 0.9.2 - Bug fix: don't fail when measuring cache if file gets deleted by another process (more robust)
 * 0.9.1 - Bug fix: don't fail when measuring cache if file gets deleted by another process
 * 0.9.0 - Expose Handle#md5_hash
 * 0.8.0 - Include prefix in proxy_path (thus allowing cache sharing)
