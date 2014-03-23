@@ -194,13 +194,7 @@ module Defog
       # find available space (not counting current proxy)
       available = max_cache_size
       proxy_root.find { |path|
-        available -= begin
-                       path.size
-                     rescue Errno::ENOENT
-                       # some other process has snuck in and deleted the
-                       # file since the path.file? check.  has happened...
-                       0
-                     end if path.file? and path != proxy_path
+        available -= pathTry(path, :size) if path.file? and path != proxy_path
       }
       return if available >= want_size
 
@@ -213,7 +207,7 @@ module Defog
 
       # take candidates in LRU order until that would be enough space
       would_free = 0
-      candidates = Set.new(candidates.sort_by(&:atime).take_while{|path| (would_free < space_needed).tap{|condition| would_free += path.size}})
+      candidates = Set.new(candidates.sort_by(&:atime).take_while{|path| (would_free < space_needed).tap{|condition| would_free += pathTry(path, :size)}})
 
       # still not enough...?
       raise Error::CacheFull, "No room in cache for #{proxy_path.relative_path_from(proxy_root)}: size=#{want_size} available=#{available} can_free=#{would_free} (max_cache_size=#{max_cache_size})" if would_free < space_needed
@@ -222,23 +216,29 @@ module Defog
       # chunk.  So take another pass, eliminating files that aren't needed.
       # Do this in reverse size order, since we want to keep big files in
       # the cache if possible since they're most expensive to replace.
-      candidates.sort_by(&:size).reverse.each do |path|
-        if (would_free - path.size) > space_needed
+      size = Hash.new { |h, path| h[path] = pathTry(path, :size) }
+      candidates.sort_by{|path| size[path]}.reverse.each do |path|
+        if (would_free - size[path]) > space_needed
           candidates.delete path
-          would_free -= path.size
+          would_free -= size[path]
         end
       end
 
       # free the remaining candidates
       candidates.each do |candidate|
-        begin
-          candidate.unlink
-        rescue Errno::ENOENT
-          # some other process has deleted the file while we were looking at it.
-          # nothing to do.
-        end
+        pathTry(candidate, :unlink)
       end
+    end
 
+    # try a method on a Pathname without failing if the file doesn't exist
+    # (which could happen if some other process sneaks in and deletes the
+    # file after we found it).
+    def pathTry(path, method)
+      begin
+        path.send method
+      rescue Errno::ENOENT
+        0
+      end
     end
 
   end

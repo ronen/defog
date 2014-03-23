@@ -167,13 +167,20 @@ shared_examples "a proxy" do |args|
       other_proxy_path("c").should_not be_exist
     end
 
-    it "should not fail size check when proxies get deleted by another process" do
-      create_other_proxy("a", 10)
-      create_other_proxy("b", 30)
-      create_other_proxy("c", 40)
-      create_remote("x" * 80)
-      Pathname.any_instance.should_receive(:size).and_raise Errno::ENOENT
-      expect { @proxy.file(key, "r") do end }.to_not raise_error(Errno::ENOENT)
+    [0, 3, 6].each do |sizect|
+      it "should not fail size check #{sizect} when proxies get deleted by another process" do
+        create_other_proxy("a", 30)
+        create_other_proxy("b", 30)
+        create_other_proxy("c", 30)
+        create_remote("x" * 80)
+        z = 0
+        Pathname.any_instance.stub(:size) { |path|
+          raise Errno::ENOENT if z == sizect
+          z += 1
+          30
+        }
+        expect { @proxy.file(key, "r") do end }.to_not raise_error(Errno::ENOENT)
+      end
     end
 
     it "should not fail unlinking when proxies get deleted by another process" do
