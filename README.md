@@ -241,7 +241,7 @@ Gemfile:
 
 Defog is tested on:
 
-*   Ruby:  MRI 2.1.3
+*   Ruby:  MRI 1.9.3, MRI 2.1.3
 *   Fog Storage: :local, :AWS
 
 
