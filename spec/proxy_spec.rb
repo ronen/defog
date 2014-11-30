@@ -192,6 +192,15 @@ shared_examples "a proxy" do |args|
       expect { @proxy.file(key, "r") do end }.to_not raise_error(Errno::ENOENT)
     end
 
+    it "should not fail atime when proxies get deleted by another process" do
+      create_other_proxy("a", 10)
+      create_other_proxy("b", 30)
+      create_other_proxy("c", 40)
+      create_remote("x" * 80)
+      Pathname.any_instance.should_receive(:atime).and_raise Errno::ENOENT
+      expect { @proxy.file(key, "r") do end }.to_not raise_error(Errno::ENOENT)
+    end
+
     it "should delete proxies to make room for hinted size" do
       create_other_proxy("a", 10)
       create_other_proxy("b", 30)

@@ -207,7 +207,7 @@ module Defog
 
       # take candidates in LRU order until that would be enough space
       would_free = 0
-      candidates = Set.new(candidates.sort_by(&:atime).take_while{|path| (would_free < space_needed).tap{|condition| would_free += pathTry(path, :size)}})
+      candidates = Set.new(candidates.sort_by{|path| pathTry(path, :atime)}.take_while{|path| (would_free < space_needed).tap{|condition| would_free += pathTry(path, :size)}})
 
       # still not enough...?
       raise Error::CacheFull, "No room in cache for #{proxy_path.relative_path_from(proxy_root)}: size=#{want_size} available=#{available} can_free=#{would_free} (max_cache_size=#{max_cache_size})" if would_free < space_needed
