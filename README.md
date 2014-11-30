@@ -239,9 +239,9 @@ Gemfile:
 
 ## Compatibility
 
-Defog is currently known to work on:
+Defog is tested on all combinations of:
 
-*   Ruby:  MRI 1.9.2, MRI 1.9.3, MRI 2.0.0
+*   Ruby:  MRI 1.9.2, MRI 2.1.3
 *   Fog Storage: :local, :AWS
 
 
@@ -253,6 +253,7 @@ plus appropriate rspec examples.)
 ## History
 
 Release Notes:
+* 0.9.3 - Bug fix: don't fail when measuring cache if file gets deleted by another process (more robust)
 * 0.9.2 - Bug fix: don't fail when measuring cache if file gets deleted by another process (more robust)
 * 0.9.1 - Bug fix: don't fail when measuring cache if file gets deleted by another process
 * 0.9.0 - Expose Handle#md5_hash
