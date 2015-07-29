@@ -28,7 +28,7 @@ shared_examples "a proxy" do |args|
     end
 
     it "should forward file open to handle" do
-      Defog::Handle.should_receive(:new).with(@proxy, key).and_return { mock('Handle').tap { |handle|
+      Defog::Handle.should_receive(:new).with(@proxy, key).and_return { double('Handle').tap { |handle|
         handle.should_receive(:open).with("r+", :persist => true)
       } }
       @proxy.file(key, "r+", :persist => true)
@@ -150,7 +150,7 @@ shared_examples "a proxy" do |args|
     it "should not count existing proxy in total" do
       create_proxy("y" * 70)
       create_remote("x" * 70)
-      expect { @proxy.file(key, "r") do end }.to_not raise_error(Defog::Error::CacheFull)
+      expect { @proxy.file(key, "r") do end }.not_to raise_error
       proxy_path.should be_exist
       proxy_path.read.should == remote_body
     end
@@ -160,7 +160,7 @@ shared_examples "a proxy" do |args|
       create_other_proxy("b", 30)
       create_other_proxy("c", 40)
       create_remote("x" * 80)
-      expect { @proxy.file(key, "r") do end }.to_not raise_error(Defog::Error::CacheFull)
+      expect { @proxy.file(key, "r") do end }.not_to raise_error
       proxy_path.should be_exist
       other_proxy_path("a").should be_exist
       other_proxy_path("b").should_not be_exist
@@ -172,14 +172,14 @@ shared_examples "a proxy" do |args|
         create_other_proxy("a", 30)
         create_other_proxy("b", 30)
         create_other_proxy("c", 30)
-        create_remote("x" * 80)
+        create_remote("x" * 9)
         z = 0
         Pathname.any_instance.stub(:size) { |path|
           raise Errno::ENOENT if z == sizect
           z += 1
           30
         }
-        expect { @proxy.file(key, "r") do end }.to_not raise_error(Errno::ENOENT)
+        expect { @proxy.file(key, "r") do end }.not_to raise_error
       end
     end
 
@@ -188,24 +188,24 @@ shared_examples "a proxy" do |args|
       create_other_proxy("b", 30)
       create_other_proxy("c", 40)
       create_remote("x" * 80)
-      Pathname.any_instance.should_receive(:unlink).and_raise Errno::ENOENT
-      expect { @proxy.file(key, "r") do end }.to_not raise_error(Errno::ENOENT)
+      Pathname.any_instance.stub(:unlink) { raise Errno::ENOENT }
+      expect { @proxy.file(key, "r") do end }.not_to raise_error
     end
 
-    it "should not fail atime when proxies get deleted by another process" do
+    it "should not fail atime when a proxy gets deleted by another process" do
       create_other_proxy("a", 10)
       create_other_proxy("b", 30)
       create_other_proxy("c", 40)
       create_remote("x" * 80)
       Pathname.any_instance.should_receive(:atime).and_raise Errno::ENOENT
-      expect { @proxy.file(key, "r") do end }.to_not raise_error(Errno::ENOENT)
+      expect { @proxy.file(key, "r") do end }.not_to raise_error
     end
 
     it "should delete proxies to make room for hinted size" do
       create_other_proxy("a", 10)
       create_other_proxy("b", 30)
       create_other_proxy("c", 40)
-      expect { @proxy.file(key, "w", :size_hint => 80) do end }.to_not raise_error(Defog::Error::CacheFull)
+      expect { @proxy.file(key, "w", :size_hint => 80) do end }.not_to raise_error
       proxy_path.should be_exist
       other_proxy_path("a").should be_exist
       other_proxy_path("b").should_not be_exist
@@ -220,7 +220,7 @@ shared_examples "a proxy" do |args|
       @proxy.file(other_key("R"), "r") do
         @proxy.file(other_key("S"), "w") do
           create_other_proxy("S", 30)
-          expect { @proxy.file(key, "r") do end }.to_not raise_error(Defog::Error::CacheFull)
+          expect { @proxy.file(key, "r") do end }.not_to raise_error
           proxy_path.should be_exist
           other_proxy_path("R").should be_exist
           other_proxy_path("S").should be_exist
@@ -235,7 +235,7 @@ shared_examples "a proxy" do |args|
       create_remote("z" * 60)
       @proxy.file(other_key("R"), "r") do end
       other_proxy_path("R").should be_exist
-      expect { @proxy.file(key, "r") do end }.to_not raise_error(Defog::Error::CacheFull)
+      expect { @proxy.file(key, "r") do end }.not_to raise_error
       proxy_path.should be_exist
       other_proxy_path("R").should_not be_exist
     end
