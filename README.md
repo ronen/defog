@@ -253,6 +253,7 @@ plus appropriate rspec examples.)
 ## History
 
 Release Notes:
+* 0.9.4 - Bug fix: don't fail when checking atime if file gets deleted by another process (more robust)
 * 0.9.3 - Bug fix: don't fail when measuring cache if file gets deleted by another process (more robust)
 * 0.9.2 - Bug fix: don't fail when measuring cache if file gets deleted by another process (more robust)
 * 0.9.1 - Bug fix: don't fail when measuring cache if file gets deleted by another process
