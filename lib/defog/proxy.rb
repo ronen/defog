@@ -237,7 +237,10 @@ module Defog
       begin
         path.send method
       rescue Errno::ENOENT
-        0
+        case method
+        when :atime then Time.new(0)
+        else 0
+        end
       end
     end
 
