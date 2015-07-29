@@ -6,7 +6,7 @@ shared_examples "get proxy" do
     create_remote("hello")
     should_log /Download/
     file = @proxy.file(key, @mode)
-    expect(File.exist?(file.path)).to be_true
+    expect(File.exist?(file.path)).to be_truthy
     file.close
   end
 
@@ -114,7 +114,7 @@ shared_examples "create" do
       file.write("ignore me")
       proxy_path.unlink
     end
-    expect {remote_body}.to raise_error
+    expect(remote_body).to be_nil
   end
 
   it "should not create remote if :synchronize => false" do
@@ -122,7 +122,7 @@ shared_examples "create" do
     file = @proxy.file(key, @mode)
     create_proxy("ignore me")
     file.close(:synchronize => false)
-    expect {remote_body}.to raise_error
+    expect(remote_body).to be_nil
   end
 
   it "should create remote asynchronously if :synchronize => async" do
@@ -130,7 +130,7 @@ shared_examples "create" do
     file = @proxy.file(key, @mode)
     create_proxy("upload me in thread")
     expect(Thread).to receive(:new) { |&block|
-      expect {remote_body}.to raise_error
+      expect(remote_body).to be_nil
       block.call
     }
     file.close(:synchronize => :async)

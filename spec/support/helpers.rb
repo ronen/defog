@@ -3,7 +3,7 @@ module Helpers
   def key
     # returns a key that will be different for each example, to avoid any
     # cross-example interactions
-    example.metadata[:full_description].gsub(/\+/,'plus').gsub(/\W/,'-') + "/filename"
+    RSpec.current_example.metadata[:full_description].gsub(/\+/,'plus').gsub(/\W/,'-') + "/filename"
   end
 
   def create_remote(body)
@@ -23,7 +23,7 @@ module Helpers
   end
 
   def remote_body
-    @proxy.file(key).fog_model.body
+    @proxy.file(key).fog_model.andand.body
   end
 
   def remote_exist?

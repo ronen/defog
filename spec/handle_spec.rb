@@ -72,9 +72,9 @@ shared_examples "a handle" do |proxyargs|
 
   it "should delete a remote cloud file" do
     create_remote("delete me")
-    expect(remote_exist?).to be_true
+    expect(remote_exist?).to be_truthy
     @handle.delete
-    expect(remote_exist?).to be_false
+    expect(remote_exist?).to be_falsey
   end
 
   it "should return a URL to a file" do
