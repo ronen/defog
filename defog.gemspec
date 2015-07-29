@@ -23,5 +23,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rdoc'
   gem.add_development_dependency 'rspec', "<2.99"
   gem.add_development_dependency 'simplecov'
-  gem.add_development_dependency 'simplecov-gem-adapter'
+  gem.add_development_dependency 'simplecov-gem-profile'
 end
