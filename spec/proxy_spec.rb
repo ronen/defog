@@ -197,7 +197,10 @@ shared_examples "a proxy" do |args|
       create_other_proxy("b", 30)
       create_other_proxy("c", 40)
       create_remote("x" * 80)
-      Pathname.any_instance.should_receive(:atime).and_raise Errno::ENOENT
+      Pathname.any_instance.stub(:atime) {
+        @raised = true and raise Errno::ENOENT unless @raised
+        Time.now
+      }
       expect { @proxy.file(key, "r") do end }.not_to raise_error
     end
 
