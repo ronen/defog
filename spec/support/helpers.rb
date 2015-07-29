@@ -40,11 +40,11 @@ module Helpers
   end
 
   def should_log(arg)
-    @proxy.logger.should_receive(:info).with(arg)
+    expect(@proxy.logger).to receive(:info).with(arg)
   end
 
   def should_not_log(arg)
-    @proxy.logger.should_not_receive(:info).with(arg)
+    expect(@proxy.logger).not_to receive(:info).with(arg)
   end
 
 

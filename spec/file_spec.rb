@@ -6,7 +6,7 @@ shared_examples "get proxy" do
     create_remote("hello")
     should_log /Download/
     file = @proxy.file(key, @mode)
-    File.exist?(file.path).should be_true
+    expect(File.exist?(file.path)).to be_true
     file.close
   end
 
@@ -17,24 +17,24 @@ shared_examples "get proxy" do
   it "should overwrite existing proxy if it's not valid " do
     create_remote("hello")
     create_proxy("goodbye")
-    proxy_path.read.should == "goodbye"
+    expect(proxy_path.read).to eq("goodbye")
     should_log /Download/
     @proxy.file(key, @mode)
-    proxy_path.read.should == "hello"
+    expect(proxy_path.read).to eq("hello")
   end
 
   it "should use existing proxy if it's valid" do
     create_remote("hello")
     create_proxy("hello")
     handle = @proxy.file(key)
-    handle.proxy_path.should_not_receive(:open).with(/^w/)
+    expect(handle.proxy_path).not_to receive(:open).with(/^w/)
     should_not_log /Download/
     handle.open(@mode)
   end
 
   it "should include key info in exception messages" do
     create_remote("error me")
-    File.any_instance.should_receive(:write) { raise Encoding::UndefinedConversionError, "dummy" }
+    expect_any_instance_of(File).to receive(:write) { raise Encoding::UndefinedConversionError, "dummy" }
     expect {
       @proxy.file(key, "r")
     }.to raise_error Encoding::UndefinedConversionError, /#{key}/
@@ -46,22 +46,22 @@ shared_examples "read" do
     create_remote("read me")
     @proxy.file(key, @mode) do |file|
       file.rewind
-      file.read.should == "read me"
+      expect(file.read).to eq("read me")
     end
   end
 
   it "should pass 'b' mode through" do
     create_remote("binary me")
     @proxy.file(key, "#{@mode}b") do |file|
-      file.external_encoding.name.should == "ASCII-8BIT"
+      expect(file.external_encoding.name).to eq("ASCII-8BIT")
     end
   end
 
   it "should pass encodings through" do
     create_remote("encode me")
     @proxy.file(key, "#{@mode}:EUC-JP:UTF-8") do |file|
-      file.external_encoding.name.should == "EUC-JP"
-      file.internal_encoding.name.should == "UTF-8"
+      expect(file.external_encoding.name).to eq("EUC-JP")
+      expect(file.internal_encoding.name).to eq("UTF-8")
     end
   end
 
@@ -72,7 +72,7 @@ shared_examples "read after write" do
     @proxy.file(key, @mode) do |file|
       file.write "read me"
       file.rewind
-      file.read.should == "read me"
+      expect(file.read).to eq("read me")
     end
   end
 end
@@ -83,7 +83,7 @@ shared_examples "write" do
     @proxy.file(key, @mode, :persist => true) do |file|
       file.write "write me"
     end
-    proxy_path.read.should =~ /write me$/
+    expect(proxy_path.read).to match(/write me$/)
   end
 end
 
@@ -94,7 +94,7 @@ shared_examples "append" do
       file.write "goodbye"
       should_log /Upload/
     end
-    proxy_path.read.should == "hellogoodbye"
+    expect(proxy_path.read).to eq("hellogoodbye")
   end
 end
 
@@ -105,7 +105,7 @@ shared_examples "create" do
     file = @proxy.file(key, @mode)
     create_proxy("upload me")
     file.close
-    remote_body.should == "upload me"
+    expect(remote_body).to eq("upload me")
   end
 
   it "should not create remote if proxy is deleted" do
@@ -129,12 +129,12 @@ shared_examples "create" do
     should_log /Upload/
     file = @proxy.file(key, @mode)
     create_proxy("upload me in thread")
-    Thread.should_receive(:new) { |&block|
+    expect(Thread).to receive(:new) { |&block|
       expect {remote_body}.to raise_error
       block.call
     }
     file.close(:synchronize => :async)
-    remote_body.should == "upload me in thread"
+    expect(remote_body).to eq("upload me in thread")
   end
 
 end
@@ -143,25 +143,25 @@ shared_examples "update" do
 
   it "should overwrite remote" do
     create_remote("overwrite me")
-    remote_body.should == "overwrite me"
+    expect(remote_body).to eq("overwrite me")
     file = @proxy.file(key, @mode)
     create_proxy("upload me")
     should_log /Upload/
     file.close
-    remote_body.should == "upload me"
+    expect(remote_body).to eq("upload me")
   end
 
   it "should overwrite remote asynchronously if :synchronize => :async" do
     create_remote("overwrite me")
     file = @proxy.file(key, @mode)
     create_proxy("upload me")
-    Thread.should_receive(:new) { |&block|
-      remote_body.should == "overwrite me"
+    expect(Thread).to receive(:new) { |&block|
+      expect(remote_body).to eq("overwrite me")
       block.call
     }
     should_log /Upload/
     file.close(:synchronize => :async)
-    remote_body.should == "upload me"
+    expect(remote_body).to eq("upload me")
   end
 
   it "should not overwrite remote if proxy is deleted" do
@@ -171,7 +171,7 @@ shared_examples "update" do
       file.write("ignore me")
       proxy_path.unlink
     end
-    remote_body.should == "keep me"
+    expect(remote_body).to eq("keep me")
   end
 
   it "should not overwrite remote if :synchronize => false" do
@@ -180,7 +180,7 @@ shared_examples "update" do
     file = @proxy.file(key, @mode)
     create_proxy("ignore me")
     file.close(:synchronize => false)
-    remote_body.should == "keep me"
+    expect(remote_body).to eq("keep me")
   end
 
 end
@@ -189,41 +189,41 @@ shared_examples "persistence" do
   it "should delete proxy on close" do
     create_remote("whatever")
     file = @proxy.file(key, @mode)
-    proxy_path.should be_exist
+    expect(proxy_path).to be_exist
     file.close
-    proxy_path.should_not be_exist
+    expect(proxy_path).not_to be_exist
   end
 
   it "should delete proxy on close (block form)" do
     create_remote("whatever")
     @proxy.file(key, @mode) do |file|
-      proxy_path.should be_exist
+      expect(proxy_path).to be_exist
     end
-    proxy_path.should_not be_exist
+    expect(proxy_path).not_to be_exist
   end
 
   it "should not delete proxy if persisting" do
     create_remote("whatever")
     @proxy.file(key, @mode, :persist => true) do |file|
-      proxy_path.should be_exist
+      expect(proxy_path).to be_exist
     end
-    proxy_path.should be_exist
+    expect(proxy_path).to be_exist
   end
 
   it "close should override persist true" do
     create_remote("whatever")
     file = @proxy.file(key, @mode)
-    proxy_path.should be_exist
+    expect(proxy_path).to be_exist
     file.close(:persist => true)
-    proxy_path.should be_exist
+    expect(proxy_path).to be_exist
   end
 
   it "close should override persist false" do
     create_remote("whatever")
     file = @proxy.file(key, @mode, :persist => true)
-    proxy_path.should be_exist
+    expect(proxy_path).to be_exist
     file.close(:persist => false)
-    proxy_path.should_not be_exist
+    expect(proxy_path).not_to be_exist
   end
 
 end
@@ -263,7 +263,7 @@ shared_examples "a proxy file" do |proxyargs|
 
   it "should have a nice to_s" do
     @proxy.file(key, "w") {|f|
-      f.to_s.should include f.path
+      expect(f.to_s).to include f.path
     }
   end
 

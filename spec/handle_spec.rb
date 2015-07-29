@@ -11,21 +11,21 @@ shared_examples "a handle" do |proxyargs|
   end
 
   it "should have a nice to_s" do
-    @handle.to_s.should include key
+    expect(@handle.to_s).to include key
   end
 
   context "proxy path" do
     it "should start with proxy root" do
-      @handle.proxy_path.to_s.should start_with(@proxy.proxy_root.to_s)
+      expect(@handle.proxy_path.to_s).to start_with(@proxy.proxy_root.to_s)
     end
 
     it "should end with key" do
-      @handle.proxy_path.to_s.should end_with(key)
+      expect(@handle.proxy_path.to_s).to end_with(key)
     end
 
     it "should include prefix" do
       prefix = "IAmAPrefix"
-      Defog::Proxy.new(proxyargs.merge(:prefix => prefix)).file(key).proxy_path.to_s.should include(prefix.to_s)
+      expect(Defog::Proxy.new(proxyargs.merge(:prefix => prefix)).file(key).proxy_path.to_s).to include(prefix.to_s)
     end
   end
 
@@ -36,21 +36,21 @@ shared_examples "a handle" do |proxyargs|
     end
 
     it "should report exist? true" do
-      @handle.should be_exist
+      expect(@handle).to be_exist
     end
 
     it "should return md5 hash" do
-      @handle.md5_hash.should == Digest::MD5.hexdigest("i exist")
+      expect(@handle.md5_hash).to eq(Digest::MD5.hexdigest("i exist"))
     end
   end
 
   context "if remote cloud file does not exist" do
     it "should report exist? false" do
-      @handle.should_not be_exist
+      expect(@handle).not_to be_exist
     end
 
     it "should return nil md5 hash" do
-      @handle.md5_hash.should be_nil
+      expect(@handle.md5_hash).to be_nil
     end
   end
 
@@ -60,45 +60,45 @@ shared_examples "a handle" do |proxyargs|
 
     it "should delegate #{method.inspect} to the fog model #{fog_method.inspect} if the remote file exists" do
       create_remote("delegate me")
-      @handle.fog_model.class.any_instance.should_receive(fog_method).and_return { "dummy" }
-      @handle.send(method).should == "dummy"
+      expect_any_instance_of(@handle.fog_model.class).to receive(fog_method) { "dummy" }
+      expect(@handle.send(method)).to eq("dummy")
     end
 
     it "should return nil from #{method} if the remote file does not exist" do
-      @handle.send(method).should be_nil
+      expect(@handle.send(method)).to be_nil
     end
 
   end
 
   it "should delete a remote cloud file" do
     create_remote("delete me")
-    remote_exist?.should be_true
+    expect(remote_exist?).to be_true
     @handle.delete
-    remote_exist?.should be_false
+    expect(remote_exist?).to be_false
   end
 
   it "should return a URL to a file" do
     create_remote("reach out to me")
-    @handle.url.should be_a String
+    expect(@handle.url).to be_a String
   end
 
   it "should open a file" do
-    Defog::File.should_receive(:open).with(hash_including(:handle => @handle, :mode => "w"))
+    expect(Defog::File).to receive(:open).with(hash_including(:handle => @handle, :mode => "w"))
     @handle.open("w")
   end
 
   it "should return a Fog model" do
     create_remote("foggy")
-    @handle.fog_model.body.should == "foggy"
+    expect(@handle.fog_model.body).to eq("foggy")
   end
 
   it "should update when file changes" do
     create_remote("abc")
-    @proxy.file(key).size.should == 3
+    expect(@proxy.file(key).size).to eq(3)
     @proxy.file(key).open("w") do |f|
       f.write("defghij")
     end
-    @proxy.file(key).size.should == 7
+    expect(@proxy.file(key).size).to eq(7)
   end
 
 
@@ -117,7 +117,7 @@ describe Defog::Handle do
 
     it "should return a file:// URL" do
       @proxy = Defog::Proxy.new(args)
-      @proxy.file(key).url.should == "file://" + (LOCAL_CLOUD_PATH + key).to_s
+      expect(@proxy.file(key).url).to eq("file://" + (LOCAL_CLOUD_PATH + key).to_s)
     end
 
     context "with a rails app" do
@@ -125,14 +125,14 @@ describe Defog::Handle do
       it "should return a path relative to public if in public" do
         with_rails_defined do
           @proxy = Defog::Proxy.new(:provider => :local, :local_root => Rails.root + "public/defog")
-          @proxy.file(key).url.should == "/defog/#{key}"
+          expect(@proxy.file(key).url).to eq("/defog/#{key}")
         end
       end
 
       it "should return a file:// path if not in public" do
         with_rails_defined do
           @proxy = Defog::Proxy.new(args)
-          @proxy.file(key).url.should == "file://" + (LOCAL_CLOUD_PATH + key).to_s
+          expect(@proxy.file(key).url).to eq("file://" + (LOCAL_CLOUD_PATH + key).to_s)
         end
       end
     end
@@ -154,7 +154,7 @@ describe Defog::Handle do
       t = Time.now + 10*60
       #Fog::Storage::AWS::File.any_instance.should_receive(:url).with(t, "response-content-disposition" => "attachment")
       url = @proxy.file(key).url(:expiry => t, :query => {"response-content-disposition" => "attachment"})
-      url.should include "response-content-disposition=attachment"
+      expect(url).to include "response-content-disposition=attachment"
     end
 
 

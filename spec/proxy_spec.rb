@@ -8,51 +8,51 @@ shared_examples "a proxy" do |args|
     end
 
     it "should have a nice to_s" do
-      @proxy.to_s.should include @proxy.provider.to_s
-      @proxy.to_s.should include @proxy.location
+      expect(@proxy.to_s).to include @proxy.provider.to_s
+      expect(@proxy.to_s).to include @proxy.location
     end
 
     it "file should return a handle" do
       handle = @proxy.file(key)
-      handle.proxy.should == @proxy
-      handle.key.should == key
+      expect(handle.proxy).to eq(@proxy)
+      expect(handle.key).to eq(key)
     end
 
     it "file should yield a handle" do
       ret = @proxy.file(key) do |handle|
-        handle.proxy.should == @proxy
-        handle.key.should == key
+        expect(handle.proxy).to eq(@proxy)
+        expect(handle.key).to eq(key)
         123
       end
-      ret.should == 123
+      expect(ret).to eq(123)
     end
 
     it "should forward file open to handle" do
-      Defog::Handle.should_receive(:new).with(@proxy, key).and_return { double('Handle').tap { |handle|
-        handle.should_receive(:open).with("r+", :persist => true)
+      expect(Defog::Handle).to receive(:new).with(@proxy, key) { double('Handle').tap { |handle|
+        expect(handle).to receive(:open).with("r+", :persist => true)
       } }
       @proxy.file(key, "r+", :persist => true)
     end
 
     it "should return fog storage" do
-      @proxy.fog_connection.should == @proxy.fog_directory.service
+      expect(@proxy.fog_connection).to eq(@proxy.fog_directory.service)
     end
 
     it "should return fog directory" do
       create_remote("hello")
-      @proxy.fog_directory.files.get(key).body.should == "hello"
+      expect(@proxy.fog_directory.files.get(key).body).to eq("hello")
     end
   end
 
   context "settings" do
     it "should set default for :persist => true" do
       @proxy = Defog::Proxy.new(args.merge(:persist => true))
-      Defog::File.should_receive(:open).with(hash_including :persist => true)
+      expect(Defog::File).to receive(:open).with(hash_including :persist => true)
       @proxy.file(key, "w") do end
     end
     it "should set default for :synchronize => :async" do
       @proxy = Defog::Proxy.new(args.merge(:synchronize => :async))
-      Defog::File.should_receive(:open).with(hash_including :synchronize => :async)
+      expect(Defog::File).to receive(:open).with(hash_including :synchronize => :async)
       @proxy.file(key, "w") do end
     end
   end
@@ -73,11 +73,11 @@ shared_examples "a proxy" do |args|
       @proxy.each do |handle|
         seen << handle.key
       end
-      seen.should =~ [other_key("i0"), other_key("i1"), other_key("i2")]
+      expect(seen).to match_array([other_key("i0"), other_key("i1"), other_key("i2")])
     end
 
     it "should return an enumerator" do
-      @proxy.each.map(&:key).should =~ [other_key("i0"), other_key("i1"), other_key("i2")]
+      expect(@proxy.each.map(&:key)).to match_array([other_key("i0"), other_key("i1"), other_key("i2")])
     end
 
   end
@@ -86,14 +86,14 @@ shared_examples "a proxy" do |args|
     it "should return its prefix" do
       prefix = "me-first"
       @proxy = Defog::Proxy.new(args.merge(:prefix => prefix))
-      @proxy.prefix.should == prefix
+      expect(@proxy.prefix).to eq(prefix)
     end
 
     it "should use a prefix" do
       prefix = "me-first"
       @proxy = Defog::Proxy.new(args.merge(:prefix => prefix))
       @proxy.file(key, "w") { |f| f.puts "hello" }
-      @proxy.file(key).fog_model.key.should == prefix + key
+      expect(@proxy.file(key).fog_model.key).to eq(prefix + key)
     end
 
     it "should iterate only matches to prefix" do
@@ -105,7 +105,7 @@ shared_examples "a proxy" do |args|
       create_other_remote("yes-y1")
       create_other_remote("yes-y2")
       create_other_remote("yes-y3")
-      @proxy.each.map(&:key).should =~[other_key("y1"), other_key("y2"), other_key("y3")]
+      expect(@proxy.each.map(&:key)).to match_array([other_key("y1"), other_key("y2"), other_key("y3")])
     end
 
   end
@@ -113,20 +113,20 @@ shared_examples "a proxy" do |args|
   context "proxy root location" do
     it "should default proxy root to tmpdir/defog" do
       proxy = Defog::Proxy.new(args)
-      proxy.proxy_root.should == Pathname.new(Dir.tmpdir) + "defog" + "#{proxy.provider.to_s}-#{proxy.location}"
+      expect(proxy.proxy_root).to eq(Pathname.new(Dir.tmpdir) + "defog" + "#{proxy.provider.to_s}-#{proxy.location}")
     end
 
     it "should default proxy root to Rails.root" do
       with_rails_defined do
         proxy = Defog::Proxy.new(args)
-        proxy.proxy_root.should == Rails.root + "tmp/defog" + "#{proxy.provider.to_s}-#{proxy.location}"
+        expect(proxy.proxy_root).to eq(Rails.root + "tmp/defog" + "#{proxy.provider.to_s}-#{proxy.location}")
       end
     end
 
     it "should accept proxy root parameter" do
       path = Pathname.new("/a/random/path")
       proxy = Defog::Proxy.new(args.merge(:proxy_root => path))
-      proxy.proxy_root.should == path
+      expect(proxy.proxy_root).to eq(path)
     end
   end
 
@@ -144,15 +144,15 @@ shared_examples "a proxy" do |args|
     it "should raise an error trying to proxy a file larger than the cache" do
       create_remote("x" * 101)
       expect { @proxy.file(key, "r") }.to raise_error(Defog::Error::CacheFull)
-      proxy_path.should_not be_exist
+      expect(proxy_path).not_to be_exist
     end
 
     it "should not count existing proxy in total" do
       create_proxy("y" * 70)
       create_remote("x" * 70)
       expect { @proxy.file(key, "r") do end }.not_to raise_error
-      proxy_path.should be_exist
-      proxy_path.read.should == remote_body
+      expect(proxy_path).to be_exist
+      expect(proxy_path.read).to eq(remote_body)
     end
 
     it "should delete proxies to make room" do
@@ -161,10 +161,10 @@ shared_examples "a proxy" do |args|
       create_other_proxy("c", 40)
       create_remote("x" * 80)
       expect { @proxy.file(key, "r") do end }.not_to raise_error
-      proxy_path.should be_exist
-      other_proxy_path("a").should be_exist
-      other_proxy_path("b").should_not be_exist
-      other_proxy_path("c").should_not be_exist
+      expect(proxy_path).to be_exist
+      expect(other_proxy_path("a")).to be_exist
+      expect(other_proxy_path("b")).not_to be_exist
+      expect(other_proxy_path("c")).not_to be_exist
     end
 
     [0, 3, 6].each do |sizect|
@@ -174,7 +174,7 @@ shared_examples "a proxy" do |args|
         create_other_proxy("c", 30)
         create_remote("x" * 9)
         z = 0
-        Pathname.any_instance.stub(:size) { |path|
+        allow_any_instance_of(Pathname).to receive(:size) { |path|
           raise Errno::ENOENT if z == sizect
           z += 1
           30
@@ -188,7 +188,7 @@ shared_examples "a proxy" do |args|
       create_other_proxy("b", 30)
       create_other_proxy("c", 40)
       create_remote("x" * 80)
-      Pathname.any_instance.stub(:unlink) { raise Errno::ENOENT }
+      allow_any_instance_of(Pathname).to receive(:unlink) { raise Errno::ENOENT }
       expect { @proxy.file(key, "r") do end }.not_to raise_error
     end
 
@@ -197,7 +197,7 @@ shared_examples "a proxy" do |args|
       create_other_proxy("b", 30)
       create_other_proxy("c", 40)
       create_remote("x" * 80)
-      Pathname.any_instance.stub(:atime) {
+      allow_any_instance_of(Pathname).to receive(:atime) {
         @raised = true and raise Errno::ENOENT unless @raised
         Time.now
       }
@@ -209,10 +209,10 @@ shared_examples "a proxy" do |args|
       create_other_proxy("b", 30)
       create_other_proxy("c", 40)
       expect { @proxy.file(key, "w", :size_hint => 80) do end }.not_to raise_error
-      proxy_path.should be_exist
-      other_proxy_path("a").should be_exist
-      other_proxy_path("b").should_not be_exist
-      other_proxy_path("c").should_not be_exist
+      expect(proxy_path).to be_exist
+      expect(other_proxy_path("a")).to be_exist
+      expect(other_proxy_path("b")).not_to be_exist
+      expect(other_proxy_path("c")).not_to be_exist
     end
 
     it "should not delete proxies that are open" do
@@ -224,11 +224,11 @@ shared_examples "a proxy" do |args|
         @proxy.file(other_key("S"), "w") do
           create_other_proxy("S", 30)
           expect { @proxy.file(key, "r") do end }.not_to raise_error
-          proxy_path.should be_exist
-          other_proxy_path("R").should be_exist
-          other_proxy_path("S").should be_exist
-          other_proxy_path("a").should_not be_exist
-          other_proxy_path("b").should_not be_exist
+          expect(proxy_path).to be_exist
+          expect(other_proxy_path("R")).to be_exist
+          expect(other_proxy_path("S")).to be_exist
+          expect(other_proxy_path("a")).not_to be_exist
+          expect(other_proxy_path("b")).not_to be_exist
         end
       end
     end
@@ -237,10 +237,10 @@ shared_examples "a proxy" do |args|
       create_other_remote("R", 60)
       create_remote("z" * 60)
       @proxy.file(other_key("R"), "r") do end
-      other_proxy_path("R").should be_exist
+      expect(other_proxy_path("R")).to be_exist
       expect { @proxy.file(key, "r") do end }.not_to raise_error
-      proxy_path.should be_exist
-      other_proxy_path("R").should_not be_exist
+      expect(proxy_path).to be_exist
+      expect(other_proxy_path("R")).not_to be_exist
     end
 
     it "should not delete proxies if there wouldn't be enough space" do
@@ -252,11 +252,11 @@ shared_examples "a proxy" do |args|
       @proxy.file(other_key("R"), "r") do
         @proxy.file(other_key("S"), "r") do
           expect { @proxy.file(key, "r") do end }.to raise_error(Defog::Error::CacheFull)
-          proxy_path.should_not be_exist
-          other_proxy_path("a").should be_exist
-          other_proxy_path("b").should be_exist
-          other_proxy_path("R").should be_exist
-          other_proxy_path("S").should be_exist
+          expect(proxy_path).not_to be_exist
+          expect(other_proxy_path("a")).to be_exist
+          expect(other_proxy_path("b")).to be_exist
+          expect(other_proxy_path("R")).to be_exist
+          expect(other_proxy_path("S")).to be_exist
         end
       end
     end
@@ -299,7 +299,7 @@ describe Defog::Proxy do
     it_should_behave_like "a proxy", args
 
     it "should use the deslashed local_root as the location" do
-      Defog::Proxy.new(args).location.should == LOCAL_CLOUD_PATH.to_s.gsub(%r{/},"-")
+      expect(Defog::Proxy.new(args).location).to eq(LOCAL_CLOUD_PATH.to_s.gsub(%r{/},"-"))
     end
 
   end
@@ -313,25 +313,25 @@ describe Defog::Proxy do
     it_should_behave_like "a proxy", args
 
     it "should use the bucket name as the location" do
-      Defog::Proxy.new(args).location.should == args[:bucket]
+      expect(Defog::Proxy.new(args).location).to eq(args[:bucket])
     end
 
     it "should share fog connection with same bucket" do
       proxy1 = Defog::Proxy.new(args)
       proxy2 = Defog::Proxy.new(args)
-      proxy1.fog_connection.should be_equal proxy2.fog_connection
+      expect(proxy1.fog_connection).to be_equal proxy2.fog_connection
     end
 
     it "should share fog connection with different bucket" do
       proxy1 = Defog::Proxy.new(args)
       proxy2 = Defog::Proxy.new(args.merge(:bucket => "other"))
-      proxy1.fog_connection.should be_equal proxy2.fog_connection
+      expect(proxy1.fog_connection).to be_equal proxy2.fog_connection
     end
 
     it "should not share fog connection with different connection args" do
       proxy1 = Defog::Proxy.new(args)
       proxy2 = Defog::Proxy.new(args.merge(:aws_access_key_id => "other"))
-      proxy1.fog_connection.should_not be_equal proxy2.fog_connection
+      expect(proxy1.fog_connection).not_to be_equal proxy2.fog_connection
     end
 
   end
