@@ -15,7 +15,8 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Defog::VERSION
 
-  gem.add_dependency 'fog'
+  gem.add_dependency 'fog', '~> 1.37'
+  gem.add_dependency 'mime-types' # need to add this explicitly for fog-storage
   gem.add_dependency 'hash_keyword_args'
   gem.add_dependency 'fastandand'
 
